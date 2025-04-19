@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOMContentLoaded event fired. dashboard.js starting...'); // <-- Log 1: Script start
+
     const sidebar = document.querySelector('.sidebar');
     const sidebarToggle = document.querySelector('.sidebar-toggle');
     // Check if we are on a page with the dashboard layout
@@ -25,17 +27,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Dashboard Page Specific Logic --- //
     if (isDashboardPage) {
+        console.log('Dashboard Page Specific Logic block entered.'); // <-- Log 2: Block entered
+
         console.log('Running Dashboard Page Specific Logic');
         const sidebarNav = document.querySelector('.sidebar-nav');
-        const sidebarLinks = sidebarNav?.querySelectorAll('ul li a[href^="#"]'); 
+        const sidebarLinks = sidebarNav?.querySelectorAll('ul li a[href^="#"]');
+        console.log('Sidebar Links Found:', sidebarLinks); // <-- Log 3: Links found?
+
         const dashboardSections = document.querySelectorAll('.dashboard-main > section.dashboard-section[id]'); // Ensure sections have IDs
         const dashboardHeaderH1 = document.querySelector('.dashboard-header h1'); // Get the H1 element
 
-        // Simple store for selected files in the main upload area
-        let selectedFilesStore = [];
+        // --- File Upload Elements --- //
+        const uploadArea = document.querySelector('.upload-area');
+        const fileInput = document.getElementById('document-upload-input');
         const selectedFilesListElement = document.getElementById('selected-files-list')?.querySelector('ul');
         const noFilesMessage = document.querySelector('#selected-files-list .no-files-selected');
         const uploadAllButton = document.getElementById('upload-selected-button');
+        const uploadedFilesListElement = document.getElementById('uploaded-files-list')?.querySelector('ul');
+        const noUploadedFilesMessage = document.querySelector('#uploaded-files-list .no-uploaded-files');
+        const uploadFeedbackArea = document.getElementById('upload-feedback-area'); // Feedback area for uploads
+
+        // Store for files selected but not yet uploaded
+        let selectedFilesStore = [];
 
         // --- Study Set Variables & Elements --- //
         const studySetSection = document.getElementById('study-sets');
@@ -50,6 +63,69 @@ document.addEventListener('DOMContentLoaded', () => {
         const saveSetButton = document.getElementById('save-set-button');
         const closeModalButtons = document.querySelectorAll('.close-modal-btn');
         const studySetMessages = document.getElementById('study-set-messages');
+
+        // --- NEW: Study Set Detail View Elements --- //
+        const studySetsGridView = document.getElementById('study-sets-grid-view');
+        const studySetDetailView = document.getElementById('study-set-detail-view');
+        const detailSetNameElement = document.getElementById('detail-set-name');
+        const detailSetFilesListElement = document.getElementById('detail-set-files-list')?.querySelector('ul');
+        const noFilesInSetMsg = document.querySelector('#detail-set-files-list .no-files-in-set');
+        const addFileToSetBtn = document.getElementById('add-file-to-set-btn');
+        const backToSetsBtn = document.getElementById('back-to-sets-btn');
+        let currentViewingSetId = null; // To store the ID of the set being viewed
+
+        // --- NEW: Add File Modal Elements --- //
+        const addFileModal = document.getElementById('add-file-modal');
+        const addFileModalListElement = document.getElementById('add-file-modal-list')?.querySelector('ul');
+        const addFileModalLoadingMsg = document.querySelector('#add-file-modal-list .loading-modal-files');
+        const addFileFeedbackArea = document.getElementById('add-file-feedback-area');
+        const closeAddFileModalBtns = document.querySelectorAll('.close-add-file-modal-btn');
+        const confirmAddFilesBtn = document.getElementById('confirm-add-files-btn');
+
+        // --- NEW: Edit File Modal Elements --- //
+        const editFileModal = document.getElementById('edit-file-modal');
+        const editFileForm = document.getElementById('edit-file-form');
+        const editFileIdInput = document.getElementById('edit-file-id');
+        const editFileNameInput = document.getElementById('edit-file-name');
+        const editFileSetSelect = document.getElementById('edit-file-set');
+        const editFileFeedbackArea = document.getElementById('edit-file-feedback-area');
+        const closeEditFileModalBtns = document.querySelectorAll('.close-edit-file-modal-btn');
+        const saveFileChangesBtn = document.getElementById('save-file-changes-btn');
+
+        // --- Helper Functions --- //
+        function escapeHTML(str) {
+            const p = document.createElement('p');
+            p.textContent = str;
+            return p.innerHTML;
+        }
+
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        // Function to display feedback messages in a specific area
+        function showFeedback(areaElement, message, isError = false) {
+            if (!areaElement) return;
+            
+            // Hide if message is empty, otherwise show and style
+            if (!message || message.trim() === '') {
+                areaElement.style.display = 'none';
+                areaElement.textContent = '';
+            } else {
+                areaElement.textContent = message;
+                areaElement.className = isError ? 'feedback-area error' : 'feedback-area success';
+                areaElement.style.display = 'block';
+                // Optionally hide after a delay
+                setTimeout(() => {
+                    if (areaElement) areaElement.style.display = 'none';
+                 }, 5000);
+            }
+        }
 
         // --- Function to Personalize Greeting --- //
         async function personalizeGreeting() {
@@ -79,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Function to activate a section based on ID
         function activateSection(targetId) {
-            console.log(`Attempting to activate section: ${targetId}`);
+            console.log(`Activate Section Called with ID: ${targetId}`);
             let sectionFound = false;
             let activeLinkUpdated = false;
 
@@ -90,12 +166,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Show the target section
             const targetSection = document.getElementById(targetId);
+            console.log('Target Section Element Found:', targetSection);
             if (targetSection) {
                 targetSection.style.display = 'block';
                 console.log(`Section ${targetId} displayed.`);
-                // If activating study sets, fetch them
+                // Load data for the activated section
                 if (targetId === 'study-sets') {
                     fetchStudySets();
+                }
+                if (targetId === 'upload') {
+                    displayUploadedFiles(); // Fetch and display files when upload section is shown
                 }
                 sectionFound = true;
             } else {
@@ -133,6 +213,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     sidebarLinks.forEach(l => l.parentElement.classList.remove('active'));
                     firstLink.parentElement.classList.add('active');
                     console.log(`Defaulted to section: ${firstSectionId}`);
+                     // Load data for the default section if necessary
+                     if (firstSectionId === 'study-sets') fetchStudySets();
+                     if (firstSectionId === 'upload') displayUploadedFiles();
                 } else {
                     console.error('Could not default to first section.');
                 }
@@ -143,12 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Function to display messages (success/error)
         function showStudySetMessage(message, isError = false) {
-            if (!studySetMessages) return;
-            studySetMessages.textContent = message;
-            studySetMessages.className = isError ? 'feedback-area error' : 'feedback-area success';
-            studySetMessages.style.display = 'block';
-             // Optionally hide after a delay
-             setTimeout(() => { studySetMessages.style.display = 'none'; }, 5000);
+            showFeedback(studySetMessages, message, isError);
         }
 
         // Function to render study sets
@@ -163,23 +241,150 @@ document.addEventListener('DOMContentLoaded', () => {
                 const card = document.createElement('div');
                 card.className = 'study-set-card';
                 card.dataset.setId = set.id;
+                const setName = escapeHTML(set.name);
                 card.innerHTML = `
-                    <h4>${escapeHTML(set.name)}</h4>
-                    <!-- TODO: Add link/button to view set contents -->
-                    <div class="study-set-actions">
-                        <button type="button" class="edit-set-btn" data-id="${set.id}" data-name="${escapeHTML(set.name)}">Edit</button>
-                        <button type="button" class="delete-set-btn" data-id="${set.id}">Delete</button>
+                    <h4>${setName}</h4>
+                    <div class="file-actions"> 
+                        <button type="button" class="btn-edit-file edit-set-btn" data-id="${set.id}" data-name="${setName}" aria-label="Edit study set ${setName}">Edit</button> 
+                        <button type="button" class="btn-delete-file delete-set-btn" data-id="${set.id}" aria-label="Delete study set ${setName}">×</button>
                     </div>
                 `;
                 // Add event listeners for edit/delete
                 card.querySelector('.edit-set-btn').addEventListener('click', handleEditSet);
                 card.querySelector('.delete-set-btn').addEventListener('click', handleDeleteSet);
+                
+                // Add listener to the card itself for navigation (excluding action buttons)
+                card.addEventListener('click', (event) => {
+                    // Only navigate if the click was NOT on an action button or within the actions div
+                    if (!event.target.closest('.file-actions')) {
+                        console.log(`Navigating to detail view for set ID: ${set.id}`);
+                        showStudySetDetail(set.id, setName);
+                    }
+                });
+                
                 studySetGrid.appendChild(card);
             });
         }
 
-        // Function to fetch study sets from Supabase
-        async function fetchStudySets() {
+        // --- NEW: Functions to toggle views and show set details --- //
+        function showStudySetGrid() {
+            if (studySetsGridView) studySetsGridView.style.display = 'block';
+            if (studySetDetailView) studySetDetailView.style.display = 'none';
+            currentViewingSetId = null; // Reset currently viewed set
+             // Optional: Add focus back to the grid or add button?
+        }
+
+        function showStudySetDetail(setId, setName) {
+            if (!studySetsGridView || !studySetDetailView || !detailSetNameElement) return;
+            console.log(`Showing detail for Set ID: ${setId}, Name: ${setName}`);
+            studySetsGridView.style.display = 'none';
+            studySetDetailView.style.display = 'block';
+            detailSetNameElement.textContent = setName; // Set the title
+            currentViewingSetId = setId; // Store the current set ID
+            
+            // Call function to load files for this set (will be implemented next)
+            fetchAndDisplayFilesInSet(setId); 
+        }
+
+        // Function to fetch and display files associated with a specific study set
+        async function fetchAndDisplayFilesInSet(setId) {
+            if (!detailSetFilesListElement || !noFilesInSetMsg || !setId) return;
+            console.log(`Fetching files for set ID ${setId}...`);
+            detailSetFilesListElement.innerHTML = ''; // Clear previous list
+            noFilesInSetMsg.style.display = 'block';
+            noFilesInSetMsg.textContent = 'Loading files...';
+
+            try {
+                const { data: setFiles, error: fetchError } = await supabaseClient
+                    .from('study_set_files')
+                    .select(`
+                        id, 
+                        uploaded_file_id, 
+                        uploaded_files ( file_name )
+                    `)
+                    .eq('study_set_id', setId)
+                    .order('added_at', { ascending: true });
+
+                if (fetchError) {
+                    throw new Error(`Failed to fetch files in set: ${fetchError.message}`);
+                }
+
+                if (setFiles && setFiles.length > 0) {
+                    noFilesInSetMsg.style.display = 'none'; // Hide 'no files' message
+                    setFiles.forEach(setFile => {
+                        const fileInfo = setFile.uploaded_files;
+                        if (!fileInfo) { // Check if related file data exists
+                            console.warn('Associated file data missing for study_set_files id:', setFile.id);
+                            return; // Skip this entry
+                        }
+                        const li = document.createElement('li');
+                        // Ensure correct class and data-attribute for remove button
+                         li.innerHTML = `
+                            <span>${escapeHTML(fileInfo.file_name)}</span>
+                            <div class="file-actions">
+                                <button class="btn-remove-from-set" data-association-id="${setFile.id}" aria-label="Remove ${escapeHTML(fileInfo.file_name)} from set">&times;</button>
+                            </div>
+                        `;
+                        detailSetFilesListElement.appendChild(li);
+                    });
+                } else {
+                    noFilesInSetMsg.textContent = "No files added to this set yet.";
+                }
+                console.log('Displayed files in set.');
+
+            } catch (err) {
+                 console.error('Error fetching/displaying files in set:', err);
+                 noFilesInSetMsg.textContent = 'Error loading files for this set.';
+                 showFeedback(uploadFeedbackArea || studySetMessages, `Error loading set files: ${err.message}`, true);
+            }
+        }
+        
+        // Function to handle removing a file association from a set
+        async function handleRemoveFileFromSet(associationId) {
+             console.log(`handleRemoveFileFromSet called with ID: ${associationId}`); // <-- Log entry
+             if (!associationId) {
+                 console.error("handleRemoveFileFromSet: associationId is missing!");
+                 return;
+             }
+             if (!confirm('Are you sure you want to remove this file from the set?')) return;
+
+             console.log(`Removing file association ID: ${associationId}`);
+             // Optionally show feedback in the detail view
+             // showFeedback(detailFeedbackArea, 'Removing file from set...', false);
+
+             try {
+                const { error } = await supabaseClient
+                    .from('study_set_files')
+                    .delete()
+                    .eq('id', associationId);
+
+                if (error) {
+                    console.error("Supabase delete error:", error); // <-- Log Supabase error
+                    throw error;
+                }
+
+                console.log('File association removed successfully.');
+                // showFeedback(detailFeedbackArea, 'File removed from set.', false);
+                // Refresh the list for the current set
+                if (currentViewingSetId) {
+                     fetchAndDisplayFilesInSet(currentViewingSetId);
+                } else {
+                    console.warn('Cannot refresh file list, currentViewingSetId is not set.');
+                }
+             } catch (err) {
+                 console.error('Error removing file from set:', err);
+                  // showFeedback(detailFeedbackArea, `Error removing file: ${err.message}`, true);
+             }
+        }
+
+        // --- Add Event Listener for Back Button --- //
+        if (backToSetsBtn) {
+            backToSetsBtn.addEventListener('click', showStudySetGrid);
+        }
+
+        // --- Existing Study Set Functions (fetchStudySets, openSetModal, etc.) --- //
+        async function fetchStudySets() { 
+            showStudySetGrid(); // Ensure grid is visible when fetching all sets
             if (!loadingSetsMsg) return;
             console.log('Fetching study sets...');
             loadingSetsMsg.style.display = 'block';
@@ -295,7 +500,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-         // --- Edit/Delete Handlers --- //
+         // --- Edit/Delete Handlers for Study Sets --- //
         function handleEditSet(event) {
             const button = event.target;
             const setId = button.dataset.id;
@@ -344,217 +549,682 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // --- Helper to escape HTML --- //
-        function escapeHTML(str) {
-            const div = document.createElement('div');
-            div.appendChild(document.createTextNode(str));
-            return div.innerHTML;
-        }
+        // --- File Upload Functions --- //
 
-        // --- Initial Page Load logic --- //
-        personalizeGreeting(); 
-        // Activate section based on hash or default
-        const initialHash = window.location.hash.substring(1);
-        if (initialHash) {
-             console.log(`Initial load detected hash: ${initialHash}`);
-             activateSection(initialHash); // This will call fetchStudySets if hash is #study-sets
-        } else {
-            console.log('Initial load, no hash detected. Activating default section.');
-             const firstLink = sidebarLinks[0];
-             const firstSectionId = firstLink?.getAttribute('href')?.substring(1);
-             if(firstSectionId) {
-                 activateSection(firstSectionId);
-             } else {
-                  console.error('No sidebar links found to determine default section.')
-             }
-        }
+        // Function to render the list of already uploaded files
+        async function displayUploadedFiles() {
+            if (!uploadedFilesListElement || !noUploadedFilesMessage) return;
+            console.log('Fetching uploaded files...');
+            uploadedFilesListElement.innerHTML = ''; // Clear previous list
+            noUploadedFilesMessage.style.display = 'block'; // Show initially
+            noUploadedFilesMessage.textContent = 'Loading documents...';
 
-        // --- Sidebar Navigation Click Handler --- //
-        sidebarLinks.forEach(link => {
-            link.addEventListener('click', (event) => {
-                event.preventDefault(); 
-                const targetId = link.getAttribute('href').substring(1);
-                console.log(`Sidebar link clicked. Target: ${targetId}`);
-                activateSection(targetId);
-                
-                // Close sidebar on mobile after navigation
-                if (window.innerWidth <= 768 && sidebar?.classList.contains('active')) {
-                    sidebar.classList.remove('active');
+            try {
+                const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+                if (userError || !user) {
+                    throw new Error(userError?.message || "User not logged in");
                 }
 
-                // Update URL hash using pushState
-                if (window.location.hash !== `#${targetId}`) {
-                    history.pushState({ section: targetId }, "", `#${targetId}`);
-                    console.log(`URL hash updated to #${targetId}`);
+                const { data: files, error: fetchError } = await supabaseClient
+                    .from('uploaded_files')
+                    .select('id, file_name, storage_path, uploaded_at')
+                    .eq('user_id', user.id)
+                    .order('uploaded_at', { ascending: false });
+
+                if (fetchError) {
+                    throw new Error(`Failed to fetch files: ${fetchError.message}`);
+                }
+
+                if (files && files.length > 0) {
+                    noUploadedFilesMessage.style.display = 'none'; // Hide 'no files' message
+                    files.forEach(file => {
+                        const li = document.createElement('li');
+                        // Add Edit button next to Delete button
+                        li.innerHTML = `
+                            <span>${escapeHTML(file.file_name)}</span>
+                            <div class="file-actions">
+                                <button class="btn-edit-file" data-file-id="${file.id}" data-file-name="${escapeHTML(file.file_name)}" aria-label="Edit file name ${escapeHTML(file.file_name)}">Edit</button>
+                                <button class="btn-delete-file" data-file-id="${file.id}" data-storage-path="${escapeHTML(file.storage_path)}" aria-label="Delete ${escapeHTML(file.file_name)}">×</button>
+                            </div>
+                        `;
+                        uploadedFilesListElement.appendChild(li);
+                    });
+                } else {
+                    noUploadedFilesMessage.textContent = "You haven't uploaded any documents yet.";
+                }
+                 console.log('Uploaded files displayed.');
+            } catch (err) {
+                console.error('Error displaying uploaded files:', err);
+                noUploadedFilesMessage.textContent = 'Error loading documents.';
+                showFeedback(uploadFeedbackArea, `Error loading documents: ${err.message}`, true);
+            }
+        }
+
+         // Function to handle file deletion
+        async function deleteFile(fileId, storagePath) {
+            if (!confirm(`Are you sure you want to delete this file? This action cannot be undone.`)) {
+                return; // User cancelled
+            }
+            console.log(`Attempting to delete file: ID=${fileId}, Path=${storagePath}`);
+            showFeedback(uploadFeedbackArea, 'Deleting file...', false);
+
+            try {
+                 // 1. Delete from Storage
+                 const { error: storageError } = await supabaseClient.storage
+                    .from('useruploads') // Corrected bucket name
+                    .remove([storagePath]);
+
+                 if (storageError) {
+                    // Log storage error but proceed to try deleting DB record anyway
+                    console.error(`Storage Deletion Error (Path: ${storagePath}):`, storageError);
+                    // Optionally inform the user the file might linger in storage
+                    // showFeedback(uploadFeedbackArea, `Error deleting file from storage, but attempting to remove record.`, true);
+                 }
+
+                 // 2. Delete from Database
+                const { error: dbError } = await supabaseClient
+                    .from('uploaded_files')
+                    .delete()
+                    .eq('id', fileId);
+
+                if (dbError) {
+                    throw new Error(`Database Deletion Error: ${dbError.message}`);
+                }
+
+                 console.log('File deleted successfully from DB and likely Storage.');
+                 showFeedback(uploadFeedbackArea, 'File deleted successfully!', false);
+                 displayUploadedFiles(); // Refresh the list
+
+            } catch (err) {
+                console.error('Error deleting file:', err);
+                showFeedback(uploadFeedbackArea, `Error deleting file: ${err.message}`, true);
+            }
+        }
+
+        // --- NEW: Edit File Modal Functions --- //
+        async function openEditFileModal(fileId, currentFileName) {
+            if (!editFileModal || !editFileForm || !editFileIdInput || !editFileNameInput || !editFileSetSelect) {
+                console.error("Edit file modal elements not found.");
+                return;
+            }
+             console.log(`Opening edit modal for file ID: ${fileId}, Name: ${currentFileName}`);
+
+            // Reset form and feedback
+            editFileForm.reset();
+            showFeedback(editFileFeedbackArea, '', false);
+            editFileIdInput.value = fileId;
+            editFileNameInput.value = currentFileName;
+            editFileSetSelect.innerHTML = '<option value="">-- Loading Sets... --</option>'; // Placeholder
+            editFileSetSelect.disabled = true;
+            saveFileChangesBtn.disabled = true;
+            editFileModal.style.display = 'flex';
+
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                if (!user) throw new Error("User not logged in");
+
+                // Fetch study sets and current file association concurrently
+                const [setsResult, currentAssociationResult] = await Promise.all([
+                    supabaseClient.from('study_sets').select('id, name').eq('user_id', user.id).order('name'),
+                    supabaseClient.from('study_set_files').select('study_set_id').eq('uploaded_file_id', fileId).maybeSingle() // może być null
+                ]);
+
+                const { data: studySets, error: setsError } = setsResult;
+                const { data: currentAssociation, error: associationError } = currentAssociationResult;
+
+                if (setsError) throw setsError;
+                if (associationError) throw associationError;
+
+                // Populate dropdown
+                editFileSetSelect.innerHTML = '<option value="">-- Unassigned --</option>'; // Default option
+                if (studySets && studySets.length > 0) {
+                    studySets.forEach(set => {
+                        const option = document.createElement('option');
+                        option.value = set.id;
+                        option.textContent = escapeHTML(set.name);
+                        editFileSetSelect.appendChild(option);
+                    });
+                }
+
+                // Select current association
+                if (currentAssociation) {
+                    editFileSetSelect.value = currentAssociation.study_set_id;
+                } else {
+                    editFileSetSelect.value = ""; // Select "Unassigned" if no current association
+                }
+
+                editFileSetSelect.disabled = false;
+                saveFileChangesBtn.disabled = false;
+
+            } catch (error) {
+                 console.error("Error populating edit file modal:", error);
+                 showFeedback(editFileFeedbackArea, `Error loading data: ${error.message}`, true);
+                 editFileSetSelect.innerHTML = '<option value="">-- Error Loading --</option>';
+            }
+        }
+
+        function closeEditFileModal() {
+            if (editFileModal) editFileModal.style.display = 'none';
+        }
+
+        // --- Attach Event Listeners for Edit File Modal --- //
+        closeEditFileModalBtns.forEach(btn => {
+            btn.addEventListener('click', closeEditFileModal);
+        });
+        if (editFileModal) {
+            editFileModal.addEventListener('click', (event) => {
+                if (event.target === editFileModal) closeEditFileModal();
+            });
+        }
+        // Edit File Form Submit Listener 
+        if (editFileForm) {
+            editFileForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const fileId = editFileIdInput.value;
+                const newName = editFileNameInput.value.trim();
+                const newSetId = editFileSetSelect.value || null; // null if "Unassigned"
+                const originalName = editFileNameInput.defaultValue; // Get original name to check if changed
+
+                if (!fileId) {
+                    showFeedback(editFileFeedbackArea, "Error: File ID missing.", true);
+                    return;
+                }
+                if (!newName) {
+                    showFeedback(editFileFeedbackArea, "File name cannot be empty.", true);
+                    return;
+                }
+
+                saveFileChangesBtn.disabled = true;
+                saveFileChangesBtn.textContent = 'Saving...';
+                showFeedback(editFileFeedbackArea, 'Saving changes...', false);
+
+                try {
+                    const { data: { user } } = await supabaseClient.auth.getUser();
+                    if (!user) throw new Error("User not logged in");
+
+                    // 1. Update file name if changed
+                    if (newName !== originalName) {
+                         console.log(`Updating name for file ID ${fileId} to "${newName}"`);
+                         const { error: nameUpdateError } = await supabaseClient
+                            .from('uploaded_files')
+                            .update({ file_name: newName })
+                            .eq('id', fileId);
+                         if (nameUpdateError) throw new Error(`Name Update Error: ${nameUpdateError.message}`);
+                    }
+
+                    // 2. Update study set association
+                    // First, delete existing association for this file (if any)
+                    console.log(`Deleting existing set associations for file ID ${fileId}`);
+                    const { error: deleteError } = await supabaseClient
+                        .from('study_set_files')
+                        .delete()
+                        .eq('uploaded_file_id', fileId);
+                    // Ignore error if row doesn't exist, handle others
+                    if (deleteError && deleteError.code !== 'PGRST204') { 
+                         throw new Error(`Association Delete Error: ${deleteError.message}`);
+                    }
+
+                    // Second, insert new association if a set was selected
+                    if (newSetId) {
+                        console.log(`Inserting new association for file ID ${fileId} to set ID ${newSetId}`);
+                        const { error: insertError } = await supabaseClient
+                            .from('study_set_files')
+                            .insert({ uploaded_file_id: fileId, study_set_id: newSetId });
+                         if (insertError) throw new Error(`Association Insert Error: ${insertError.message}`);
+                    }
+
+                    console.log('File details saved successfully.');
+                    showFeedback(editFileFeedbackArea, 'Changes saved successfully!', false);
+                    closeEditFileModal();
+                    displayUploadedFiles(); // Refresh the main file list
+                    // Also potentially refresh the detail view if it's visible and matches the edited file's new set
+                    if (studySetDetailView.style.display === 'block' && currentViewingSetId === newSetId) {
+                         fetchAndDisplayFilesInSet(currentViewingSetId);
+                    }
+
+                } catch (error) {
+                    console.error("Error saving file changes:", error);
+                    showFeedback(editFileFeedbackArea, `Error saving: ${error.message}`, true);
+                } finally {
+                    saveFileChangesBtn.disabled = false;
+                    saveFileChangesBtn.textContent = 'Save Changes';
                 }
             });
-        });
-
-        // Handle back/forward button navigation (popstate)
-        window.addEventListener('popstate', (event) => {
-            const targetId = event.state?.section || window.location.hash.substring(1);
-            console.log(`Popstate event detected. Target: ${targetId || '[No State/Hash]'}`);
-            if (targetId) {
-                activateSection(targetId);
-            } else {
-                // If popstate leads to a state without hash/section (e.g., initial page state)
-                // Default to the first section
-                const firstLink = sidebarLinks[0];
-                const firstSectionId = firstLink?.getAttribute('href')?.substring(1);
-                 if(firstSectionId) {
-                    activateSection(firstSectionId);
-                 } 
-            }
-        });
-
-        // --- File Input Trigger & Handling (Main Upload Area) --- //
-        const uploadArea = document.querySelector('.upload-area');
-        const fileInput = document.getElementById('document-upload-input'); // Use updated ID
-        const selectFilesButton = uploadArea?.querySelector('.btn-primary'); // More specific selector
-        const uploadFeedback = uploadArea?.querySelector('.upload-feedback p');
-
-         // Function to format bytes
-        function formatBytes(bytes, decimals = 2) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const dm = decimals < 0 ? 0 : decimals;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
         }
 
-        // Function to update the selected files list UI
+        // --- NEW: Add File Modal Functions --- //
+        async function openAddFileModal() {
+            if (!addFileModal || !addFileModalListElement || !addFileModalLoadingMsg || !currentViewingSetId) {
+                console.error("Add file modal elements not found or no set ID is selected.");
+                showFeedback(studySetMessages, "Cannot open add file dialog: No set selected or modal elements missing.", true);
+                return;
+            }
+
+            console.log("Opening add file modal for set ID:", currentViewingSetId);
+            addFileModalListElement.innerHTML = ''; // Clear previous list
+            addFileModalLoadingMsg.style.display = 'block';
+            addFileModalLoadingMsg.textContent = 'Loading your uploaded files...';
+            addFileModal.style.display = 'flex'; // Show modal
+            showFeedback(addFileFeedbackArea, '', false); // Clear previous feedback
+
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                if (!user) throw new Error("User not logged in");
+
+                // Fetch all uploaded files for the user
+                const { data: allFiles, error: fetchError } = await supabaseClient
+                    .from('uploaded_files')
+                    .select('id, file_name')
+                    .eq('user_id', user.id)
+                    .order('file_name', { ascending: true });
+
+                if (fetchError) throw fetchError;
+
+                addFileModalLoadingMsg.style.display = 'none'; // Hide loading message
+
+                if (!allFiles || allFiles.length === 0) {
+                     addFileModalListElement.innerHTML = '<p>You have no uploaded documents to add.</p>';
+                     confirmAddFilesBtn.disabled = true; // Disable add button if no files
+                     return;
+                }
+
+                // Populate the list with checkboxes
+                allFiles.forEach(file => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <label class="checkbox-label">
+                            <input type="checkbox" value="${file.id}" name="fileToAdd">
+                            ${escapeHTML(file.file_name)}
+                        </label>
+                    `;
+                    addFileModalListElement.appendChild(li);
+                });
+                confirmAddFilesBtn.disabled = false; // Ensure button is enabled
+
+            } catch (error) {
+                console.error("Error populating add file modal:", error);
+                addFileModalLoadingMsg.style.display = 'none';
+                addFileModalListElement.innerHTML = '<p class="error">Error loading your files.</p>';
+                 showFeedback(addFileFeedbackArea, `Error loading files: ${error.message}`, true);
+                 confirmAddFilesBtn.disabled = true;
+            }
+        }
+
+        function closeAddFileModal() {
+            if (addFileModal) addFileModal.style.display = 'none';
+            if (addFileModalListElement) addFileModalListElement.innerHTML = ''; // Clear list on close
+        }
+
+        // --- Attach Event Listeners for Add File Modal --- //
+        if (addFileToSetBtn) {
+            addFileToSetBtn.addEventListener('click', openAddFileModal);
+        }
+        closeAddFileModalBtns.forEach(btn => {
+            btn.addEventListener('click', closeAddFileModal);
+        });
+        if (addFileModal) {
+            addFileModal.addEventListener('click', (event) => {
+                if (event.target === addFileModal) { // Clicked on background
+                    closeAddFileModal();
+                }
+            });
+        }
+        if (confirmAddFilesBtn) {
+            confirmAddFilesBtn.addEventListener('click', async () => {
+                if (!currentViewingSetId) {
+                    showFeedback(addFileFeedbackArea, "Error: No study set context.", true);
+                    return;
+                }
+
+                const selectedCheckboxes = addFileModalListElement.querySelectorAll('input[name="fileToAdd"]:checked');
+                const fileIdsToAdd = Array.from(selectedCheckboxes).map(cb => cb.value);
+
+                if (fileIdsToAdd.length === 0) {
+                    showFeedback(addFileFeedbackArea, "No files selected to add.", true);
+                    return;
+                }
+
+                console.log(`Adding ${fileIdsToAdd.length} file(s) to set ID ${currentViewingSetId}`);
+                confirmAddFilesBtn.disabled = true;
+                confirmAddFilesBtn.textContent = 'Adding...';
+                showFeedback(addFileFeedbackArea, 'Adding selected files...', false);
+
+                const recordsToInsert = fileIdsToAdd.map(fileId => ({
+                    study_set_id: currentViewingSetId,
+                    uploaded_file_id: fileId
+                }));
+
+                try {
+                    const { error } = await supabaseClient
+                        .from('study_set_files')
+                        .insert(recordsToInsert, { returning: 'minimal' }); // Don't need inserted data back
+
+                    if (error) {
+                         // Handle potential duplicate error gracefully (constraint unique_set_file)
+                         if (error.code === '23505') { // PostgreSQL unique violation code
+                             console.warn("Attempted to add duplicate files to the set.", error);
+                             showFeedback(addFileFeedbackArea, "Some files were already in the set.", true);
+                             // Still proceed to close and refresh
+                         } else {
+                            throw error; // Throw other errors
+                         }
+                    } else {
+                         console.log("Files added to set successfully.");
+                         showFeedback(addFileFeedbackArea, `${fileIdsToAdd.length} file(s) added successfully!`, false);
+                    }
+
+                    closeAddFileModal();
+                    fetchAndDisplayFilesInSet(currentViewingSetId); // Refresh the detail view list
+
+                } catch (err) {
+                    console.error("Error adding files to set:", err);
+                    showFeedback(addFileFeedbackArea, `Error adding files: ${err.message}`, true);
+                } finally {
+                     confirmAddFilesBtn.disabled = false;
+                     confirmAddFilesBtn.textContent = 'Add Selected Files';
+                }
+            });
+        }
+
+        // --- RESTORED: Function to handle the actual upload process --- //
+        async function uploadFiles(filesToUpload) {
+            if (!filesToUpload || filesToUpload.length === 0) {
+                showFeedback(uploadFeedbackArea, 'No files selected for upload.', true);
+                return;
+            }
+
+            showFeedback(uploadFeedbackArea, `Initiating upload for ${filesToUpload.length} file(s)...`, false);
+            if(uploadAllButton) { // Check if button exists
+                uploadAllButton.disabled = true;
+                uploadAllButton.textContent = 'Uploading...';
+            }
+
+            try {
+                const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+                if (userError || !user) {
+                    throw new Error(userError?.message || "User not logged in. Please log in again.");
+                }
+                const userId = user.id;
+
+                let successCount = 0;
+                let errorCount = 0;
+
+                for (const file of filesToUpload) {
+                    const fileExt = file.name.split('.').pop();
+                    const fileNameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
+                    const sanitizedBaseName = fileNameWithoutExt.replace(/[^a-zA-Z0-9_\-\.]/g, '_').replace(/\s+/g, '_');
+                    const uniqueFileName = `${Date.now()}_${sanitizedBaseName}.${fileExt}`;
+                    const storagePath = `${userId}/${uniqueFileName}`;
+
+                    console.log(`Uploading ${file.name} to ${storagePath}`);
+
+                    try {
+                        // 1. Upload to Storage
+                        const { error: uploadError } = await supabaseClient.storage
+                            .from('useruploads') // Ensure correct bucket name
+                            .upload(storagePath, file);
+
+                        if (uploadError) {
+                            throw new Error(`Storage Upload Error: ${uploadError.message}`);
+                        }
+                        console.log(`Successfully uploaded ${file.name} to storage.`);
+
+                        // 2. Insert metadata into Database
+                        const { error: insertError } = await supabaseClient
+                            .from('uploaded_files')
+                            .insert({
+                                user_id: userId,
+                                file_name: file.name, 
+                                storage_path: storagePath,
+                                file_size: file.size,
+                                mime_type: file.type
+                            });
+
+                        if (insertError) {
+                            console.error(`Database Insert Error for ${file.name}, attempting cleanup:`, insertError);
+                             await supabaseClient.storage.from('useruploads').remove([storagePath]);
+                            throw new Error(`Database Insert Error: ${insertError.message}`);
+                        }
+                        console.log(`Successfully inserted metadata for ${file.name}.`);
+                        successCount++;
+
+                    } catch (fileError) {
+                        console.error(`Failed to upload ${file.name}:`, fileError);
+                        errorCount++;
+                    }
+                }
+
+                // Final Feedback
+                if (errorCount > 0) {
+                    showFeedback(uploadFeedbackArea, `Upload complete. ${successCount} succeeded, ${errorCount} failed.`, true);
+                } else {
+                    showFeedback(uploadFeedbackArea, `Successfully uploaded ${successCount} file(s)!`, false);
+                }
+
+                // Reset UI
+                selectedFilesStore = [];
+                updateSelectedFilesUI();
+                displayUploadedFiles(); 
+
+            } catch (err) {
+                console.error('General Upload Error:', err);
+                showFeedback(uploadFeedbackArea, `Upload failed: ${err.message}`, true);
+            } finally {
+                if(uploadAllButton) {
+                    uploadAllButton.disabled = false;
+                    uploadAllButton.textContent = 'Upload All Selected';
+                }
+            }
+        }
+
+        // --- RESTORED: Event Listeners for File Selection and Upload --- //
+
+        // Update UI for selected files
         function updateSelectedFilesUI() {
             if (!selectedFilesListElement || !noFilesMessage || !uploadAllButton) return;
-            selectedFilesListElement.innerHTML = ''; // Clear current list
+            selectedFilesListElement.innerHTML = ''; 
             if (selectedFilesStore.length === 0) {
                 noFilesMessage.style.display = 'block';
                 uploadAllButton.style.display = 'none';
             } else {
                 noFilesMessage.style.display = 'none';
-                 selectedFilesStore.forEach((file, index) => {
-                    const listItem = document.createElement('li');
-                    listItem.innerHTML = `
-                        <span class="file-name" title="${file.name}">${file.name}</span>
-                        <span class="file-size">${formatBytes(file.size)}</span>
-                        <button type="button" class="remove-file-btn" data-index="${index}" title="Remove file">&times;</button>
+                selectedFilesStore.forEach((file, index) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        ${escapeHTML(file.name)} (${formatBytes(file.size)}) 
+                        <button data-index="${index}" class="remove-selected-file" aria-label="Remove ${escapeHTML(file.name)}">×</button>
                     `;
-                    // Add event listener for remove button
-                    listItem.querySelector('.remove-file-btn').addEventListener('click', (e) => {
-                        const indexToRemove = parseInt(e.target.getAttribute('data-index'));
-                        selectedFilesStore.splice(indexToRemove, 1); // Remove from store
-                        updateSelectedFilesUI(); // Re-render list
+                    li.querySelector('.remove-selected-file').addEventListener('click', (e) => {
+                        const indexToRemove = parseInt(e.target.getAttribute('data-index'), 10);
+                        selectedFilesStore.splice(indexToRemove, 1);
+                        updateSelectedFilesUI(); 
                     });
-                    selectedFilesListElement.appendChild(listItem);
-                 });
-                 uploadAllButton.style.display = 'inline-block';
+                    selectedFilesListElement.appendChild(li);
+                });
+                uploadAllButton.style.display = 'inline-block';
             }
         }
 
-        // Function to handle newly selected files (from input or drag/drop)
+        // Handle newly selected files (from input or drag/drop)
         function handleNewFiles(newFiles) {
-            if (!newFiles || newFiles.length === 0) return;
-            // Add to store (can add checks for duplicates, size limits, types here)
-            for (const file of newFiles) {
-                selectedFilesStore.push(file);
-                 console.log('File added:', file.name, file.size, file.type);
-            }
+            const validFiles = Array.from(newFiles).filter(file => {
+                const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                if (!allowedTypes.includes(file.type)) {
+                    showFeedback(uploadFeedbackArea || studySetMessages, `Skipping ${file.name}: Unsupported file type.`, true);
+                    return false;
+                }
+                return true;
+            });
+            validFiles.forEach(vf => {
+                if (!selectedFilesStore.some(sf => sf.name === vf.name && sf.size === vf.size)) {
+                    selectedFilesStore.push(vf);
+                }
+            });
             updateSelectedFilesUI();
-             // Optional: Clear the file input value to allow selecting the same file again
-             if (fileInput) fileInput.value = ''; 
         }
 
-        if (uploadArea && fileInput && selectFilesButton) {
-            // Trigger file input on button click
-            selectFilesButton.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent triggering uploadArea click
-                fileInput.click();
-            });
-
-            // Trigger file input on upload area click (excluding button)
-            uploadArea.addEventListener('click', () => {
-                fileInput.click();
-            });
-
-            // Handle file selection via input
+        // Listener for file input change
+        if (fileInput) {
             fileInput.addEventListener('change', (event) => {
                 handleNewFiles(event.target.files);
             });
-
-            // --- Drag and Drop Logic --- //
-            uploadArea.addEventListener('dragover', (event) => {
-                event.preventDefault(); // Necessary to allow drop
-                uploadArea.classList.add('dragover');
-                if(uploadFeedback) uploadFeedback.textContent = 'Drop files now!';
-            });
-
-            uploadArea.addEventListener('dragleave', (event) => {
-                event.preventDefault();
-                 // Check if the leave event is moving towards a child element
-                if (!uploadArea.contains(event.relatedTarget)) {
-                    uploadArea.classList.remove('dragover');
-                 }
-            });
-
-            uploadArea.addEventListener('drop', (event) => {
-                event.preventDefault(); // Prevent default browser behavior (opening file)
-                uploadArea.classList.remove('dragover');
-                const files = event.dataTransfer.files;
-                 console.log('Files dropped:', files);
-                handleNewFiles(files);
-            });
-
-        } else {
-            console.warn('Upload area elements not found.');
         }
 
-        // --- Handle the "Upload All" button click --- //
+        // Listener for the specific "Select Files" button inside the area
+        const selectFilesButton = uploadArea?.querySelector('.btn-primary');
+        if (selectFilesButton && fileInput) {
+            selectFilesButton.addEventListener('click', (e) => {
+                e.stopPropagation(); 
+                fileInput.click();
+            });
+        }
+
+        // Listener for upload area click (trigger file input, excluding button)
+        if (uploadArea && fileInput) {
+             uploadArea.addEventListener('click', (e) => {
+                 if (!e.target.closest('button')) {
+                    fileInput.click();
+                 }
+             });
+        }
+
+        // Listeners for drag and drop
+        if (uploadArea) {
+             uploadArea.addEventListener('dragover', (event) => {
+                 event.preventDefault();
+                 uploadArea.classList.add('dragging'); 
+             });
+             uploadArea.addEventListener('dragleave', () => {
+                 uploadArea.classList.remove('dragging');
+             });
+             uploadArea.addEventListener('drop', (event) => {
+                 event.preventDefault();
+                 uploadArea.classList.remove('dragging');
+                 handleNewFiles(event.dataTransfer.files);
+             });
+        }
+
+        // Listener for the main upload button ("Upload All Selected")
         if (uploadAllButton) {
             uploadAllButton.addEventListener('click', () => {
-                if (selectedFilesStore.length === 0) {
-                    alert('Please select files to upload.');
-                    return;
-                }
-                console.log('Uploading files:', selectedFilesStore);
-                 alert(`Initiating upload for ${selectedFilesStore.length} file(s). Implement actual Supabase Storage upload here.`);
-                // ** TODO: Implement actual upload logic here **
-                // Loop through selectedFilesStore
-                // For each file, call supabaseClient.storage.from('your-bucket').upload(filePath, file)
-                // Handle progress, success, errors
-                // After successful upload, potentially clear the list:
-                // selectedFilesStore = [];
-                // updateSelectedFilesUI();
+                uploadFiles(selectedFilesStore); // Assumes uploadFiles function exists
             });
         }
 
-        // --- Problem Solver Image Upload Trigger & Handling --- //
-        const problemUploadButton = document.querySelector('.btn-upload-problem');
-        const problemImageInput = document.getElementById('problem-image-upload');
-        const problemImageNameSpan = document.getElementById('problem-image-name');
+        // Listener for deleting/editing uploaded files (Your Uploaded Documents list)
+         if (uploadedFilesListElement) {
+             uploadedFilesListElement.addEventListener('click', (event) => {
+                  const editButton = event.target.closest('.btn-edit-file');
+                  const deleteButton = event.target.closest('.btn-delete-file');
+ 
+                  if (deleteButton) {
+                     const fileId = deleteButton.getAttribute('data-file-id');
+                     const storagePath = deleteButton.getAttribute('data-storage-path');
+                     console.log(`Delete button clicked. File ID: ${fileId}, Storage Path: ${storagePath}`);
+                     if (fileId && storagePath) {
+                         deleteFile(fileId, storagePath);
+                     }
+                  } else if (editButton) {
+                     const fileId = editButton.getAttribute('data-file-id');
+                     const currentName = editButton.getAttribute('data-file-name');
+                      console.log(`Edit button clicked. File ID: ${fileId}, Current Name: ${currentName}`);
+                      if (fileId && currentName) {
+                         openEditFileModal(fileId, currentName);
+                     }
+                 }
+             });
+             console.log("Attached listener to uploadedFilesListElement");
+         } else {
+              console.error("Could not find uploadedFilesListElement to attach listener.");
+         }
+        // END OF RESTORED LISTENERS 
 
-        if (problemUploadButton && problemImageInput && problemImageNameSpan) {
-            problemUploadButton.addEventListener('click', () => {
-                problemImageInput.click(); 
-            });
+        // --- Initialization & Event Listeners --- //
+        function initializeDashboard() {
+            console.log('Initializing dashboard...');
+            personalizeGreeting();
 
-            problemImageInput.addEventListener('change', (event) => {
-                const files = event.target.files;
-                if (files.length > 0) {
-                    const file = files[0];
-                    console.log('Problem image selected:', file);
-                    problemImageNameSpan.textContent = file.name; // Show the selected file name
-                    // ** TODO: Implement logic to handle/preview/upload this image **
-                    // You might want to store this file object separately if needed for submission
-                    // alert(`Image selected: ${file.name}. Implement image handling logic.`);
-                } else {
-                    problemImageNameSpan.textContent = ''; // Clear name if selection cancelled
-                }
+            // Initial section activation based on hash or default
+            const initialHash = window.location.hash.substring(1);
+            const initialSectionId = initialHash || sidebarLinks[0]?.getAttribute('href')?.substring(1) || 'upload';
+            if (initialSectionId) {
+                activateSection(initialSectionId);
+            } else {
+                console.error("Could not determine initial section.");
+                if(dashboardSections.length > 0) dashboardSections[0].style.display = 'block';
+            }
+
+            // Sidebar link click listeners
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', (event) => {
+                    // Let browser handle hash change, rely on popstate listener
+                    // event.preventDefault(); // Ensure this is REMOVED or commented out
+                    const targetId = link.getAttribute('href')?.substring(1);
+                    console.log('Sidebar link clicked, letting browser handle hash. Target ID:', targetId);
+
+                    // Close sidebar on mobile after click
+                     if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('active')) {
+                         sidebar.classList.remove('active');
+                     }
+                });
             });
+            console.log('Finished attaching sidebar link click listeners.');
+
+            // Diagnostic listener on UL (Optional, can be removed if popstate works)
+            const sidebarNavUL = sidebarNav?.querySelector('ul');
+            if (sidebarNavUL) {
+                sidebarNavUL.addEventListener('click', (event) => {
+                    console.log('!!!! Click detected on sidebar UL. Target:', event.target);
+                    if (event.target.closest('a[href^="#"]')) {
+                        console.log('!!!! Click target was inside a navigation link.');
+                    } else {
+                        console.log('!!!! Click target was NOT inside a navigation link.');
+                    }
+                });
+                 console.log('Attached diagnostic click listener to sidebar UL.');
+            } else {
+                 console.log('Could not find sidebar UL to attach diagnostic listener.');
+            }
+
+            // Handle back/forward and link clicks via hash changes
+             window.addEventListener('popstate', () => {
+                 console.log('Popstate event fired!'); // <-- Log
+                 const currentHash = window.location.hash.substring(1);
+                 const targetId = currentHash || sidebarLinks[0]?.getAttribute('href')?.substring(1) || 'upload';
+                 console.log('Popstate detected target ID:', targetId); // <-- Log
+                 activateSection(targetId);
+             });
+
+             // --- Listener for actions within the detail view file list --- //
+             if (detailSetFilesListElement) {
+                 detailSetFilesListElement.addEventListener('click', (event) => {
+                     // Use closest() for more robust button detection
+                     const removeButton = event.target.closest('.btn-remove-from-set'); 
+                     if (removeButton) {
+                         const associationId = removeButton.getAttribute('data-association-id');
+                         console.log(`Remove from set button clicked via closest(). Association ID: ${associationId}`);
+                         if (associationId) {
+                             handleRemoveFileFromSet(associationId);
+                         }
+                     }
+                 });
+                 console.log("Attached listener to detailSetFilesListElement"); // Verify listener attachment
+             } else {
+                 console.error("Could not find detailSetFilesListElement to attach listener.");
+             }
+
+            // Initial UI updates
+            updateSelectedFilesUI();
+
+            console.log('Dashboard initialized.');
         }
+
+        // Run Initialization
+        initializeDashboard();
 
     } // End of isDashboardPage check
 
-    // --- Logout Logic --- //
+    // --- Logout Logic (remains the same) --- //
     // This should run on any page with the logout link
     const logoutLink = document.querySelector('.sidebar-footer a[href="index.html"]'); // Targeting the specific logout link
 
@@ -589,5 +1259,4 @@ document.addEventListener('DOMContentLoaded', () => {
      if (isDashboardLayout) {
          document.body.classList.add('dashboard-body');
      }
-
 }); 

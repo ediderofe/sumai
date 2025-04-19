@@ -66,9 +66,46 @@
                         <ul></ul> 
                     </div>
                     <button id="upload-selected-button" class="btn btn-success" style="display: none; margin-top: 1rem;">Upload All Selected</button>
+
+                    <!-- Area to display user's uploaded files -->
+                    <div id="uploaded-files-list" class="uploaded-files card" style="margin-top: 2rem;">
+                        <h3>Your Uploaded Documents</h3>
+                        <div class="feedback-area" id="upload-feedback-area"></div> <!-- Feedback specific to uploads/deletes -->
+                        <ul>
+                            <!-- File items will be loaded here by JS -->
+                            <p class="no-uploaded-files">You haven't uploaded any documents yet.</p>
+                        </ul>
+                    </div>
                 </section>
 
-                 <section id="study-sets" class="dashboard-section" style="display: none;"> 
+                <!-- Hidden Modal for Editing File Details -->
+                <div id="edit-file-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <button type="button" class="modal-close-x close-edit-file-modal-btn">&times;</button>
+                        <h3>Edit File Details</h3>
+                        <form id="edit-file-form">
+                            <input type="hidden" id="edit-file-id" name="edit-file-id"> 
+                            <div class="form-group">
+                                <label for="edit-file-name">File Name</label>
+                                <input type="text" id="edit-file-name" name="edit-file-name" required maxlength="200">
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-file-set">Assign to Study Set</label>
+                                <select id="edit-file-set" name="edit-file-set">
+                                    <option value="">-- Unassigned --</option>
+                                    <!-- Study sets will be loaded here by JS -->
+                                </select>
+                            </div>
+                             <div class="feedback-area" id="edit-file-feedback-area"></div>
+                            <div class="modal-actions">
+                                <button type="button" class="btn btn-outline close-edit-file-modal-btn">Cancel</button>
+                                <button type="submit" id="save-file-changes-btn" class="btn btn-primary">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <section id="study-sets" class="dashboard-section" style="display: none;"> 
                     <div class="section-header">
                         <h2>My Study Sets</h2>
                         <button id="add-set-button" type="button" class="btn btn-primary">+ Create New Set</button>
@@ -76,10 +113,26 @@
                     <!-- Area to display feedback messages -->
                     <div id="study-set-messages" class="feedback-area"></div> 
                     
-                    <!-- Grid to display existing sets -->
-                    <div id="study-sets-grid" class="study-sets-grid">
-                        <!-- Study set cards will be loaded here by JS -->
-                         <p class="loading-sets">Loading study sets...</p>
+                    <!-- Grid View -->
+                    <div id="study-sets-grid-view">
+                        <div id="study-sets-grid" class="study-sets-grid">
+                            <!-- Study set cards will be loaded here by JS -->
+                            <p class="loading-sets">Loading study sets...</p>
+                        </div>
+                    </div>
+
+                    <!-- Detail View (Initially Hidden) -->
+                    <div id="study-set-detail-view" style="display: none;">
+                        <button type="button" id="back-to-sets-btn" class="btn btn-outline btn-small">&larr; Back to All Sets</button>
+                        <h3 id="detail-set-name" style="margin-top: 1.5rem;">Set Name Placeholder</h3>
+                        <h4>Files in this Set:</h4>
+                        <div id="detail-set-files-list" class="uploaded-files card">
+                             <ul>
+                                <!-- Files associated with the set will be loaded here -->
+                                <p class="no-files-in-set">No files added to this set yet.</p>
+                             </ul>
+                        </div>
+                        <button type="button" id="add-file-to-set-btn" class="btn btn-primary">+ Add File to Set</button>
                     </div>
 
                     <!-- Hidden Modal/Form for Creating/Editing Sets -->
@@ -99,9 +152,30 @@
                             </form>
                         </div>
                     </div>
+
+                    <!-- Hidden Modal/Form for ADDING FILES to a Set -->
+                    <div id="add-file-modal" class="modal" style="display: none;">
+                        <div class="modal-content">
+                            <button type="button" class="modal-close-x close-add-file-modal-btn">&times;</button>
+                            <h3 id="add-file-modal-title">Add Files to Set</h3>
+                            <p>Select files from your uploaded documents to add to this set:</p>
+                            <div id="add-file-modal-list" class="uploaded-files card" style="max-height: 300px; overflow-y: auto; margin-bottom: 1.5rem;">
+                                <ul>
+                                    <!-- List of user's uploaded files will be loaded here -->
+                                    <p class="loading-modal-files">Loading your files...</p>
+                                </ul>
+                            </div>
+                             <div class="feedback-area" id="add-file-feedback-area"></div>
+                            <div class="modal-actions">
+                                <button type="button" class="btn btn-outline close-add-file-modal-btn">Cancel</button>
+                                <button type="button" id="confirm-add-files-btn" class="btn btn-primary">Add Selected Files</button>
+                            </div>
+                        </div>
+                    </div>
+
                 </section>
 
-                <section id="summaries" class="dashboard-section" style="display: none;"> <!-- Hidden initially -->
+                 <section id="summaries" class="dashboard-section" style="display: none;"> <!-- Hidden initially -->
                     <h2>Summaries & Key Insights</h2>
                      <div class="card">
                          <p>Select a document or study set to view its summary and extracted notes.</p>
