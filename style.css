@@ -271,6 +271,7 @@ section {
     max-width: 800px; /* Control width */
     margin-left: auto;
     margin-right: auto;
+    font-size: 2.6rem; /* Slightly smaller font size */
 }
 
 .hero p {
