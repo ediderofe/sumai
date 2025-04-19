@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sumfa.st - Summarize Fast with AI</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Add icon library if needed, e.g., Font Awesome -->
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> -->
+    <!-- Supabase Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Supabase Client Initialization -->
+    <script src="auth-config.js"></script>
+    <!-- Auth Guard -->
+    <script src="auth-guard.js"></script>
+</head>
+<body>
+    <header class="header">
+        <nav class="navbar">
+            <div class="container">
+                <a href="#" class="logo">sumfa.st</a>
+                <ul class="nav-links">
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#testimonials">Testimonials</a></li>
+                    <li><a href="#pricing">Pricing</a></li>
+                    <li><a href="#faq">FAQ</a></li>
+                    <li><a href="login.html" class="btn btn-outline">Log In</a></li>
+                    <li><a href="signup.html" class="btn btn-primary">Sign Up Free</a></li>
+                </ul>
+                <button class="menu-toggle" aria-label="Toggle menu">☰</button>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h1>Stop Drowning in Notes. Start Understanding Faster with AI.</h1>
+                <p>StudySmart AI instantly summarizes docs, creates Q&A, solves problems, and organizes your study materials, so you can learn smarter, not harder.</p>
+                <a href="#pricing" class="btn btn-primary btn-large">Get Started Free - 1 Week Trial</a>
+                <div class="social-proof">
+                    <p>Trusted by students worldwide</p>
+                    <span>★★★★★</span>
+                </div>
+                <div class="hero-visual">
+                    <p>[Showcase Product Screenshot/Animation Here]</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="testimonials" class="testimonials">
+            <div class="container">
+                <h2>Don't Just Take Our Word For It...</h2>
+                <div class="testimonials-grid">
+                    <div class="testimonial-item">
+                        <p>"StudySmart AI cut my study time in half! The summaries are spot-on."</p>
+                        <span>- Alex R., University Student</span>
+                    </div>
+                    <div class="testimonial-item">
+                        <p>"Generating practice questions from my lecture notes is a game-changer for exam prep."</p>
+                        <span>- Maya K., College Student</span>
+                    </div>
+                    <div class="testimonial-item">
+                        <p>"Finally, a tool that actually helps me organize the chaos of research papers."</p>
+                        <span>- Dr. Chen, Researcher</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="problem-solution" class="problem-solution">
+            <div class="container">
+                 <h2>Overwhelmed? We Get It.</h2>
+                 <div class="problem-solution-grid">
+                    <div class="problem-card">
+                        <h3>The Old Way (The Struggle)</h3>
+                        <ul>
+                            <li>😵 Hours reading long documents</li>
+                            <li>😩 Manually making flashcards</li>
+                            <li>🤯 Getting stuck on tough problems</li>
+                            <li>📁 Disorganized notes everywhere</li>
+                        </ul>
+                    </div>
+                    <div class="solution-card">
+                        <h3>The StudySmart Way (The Solution)</h3>
+                         <ul>
+                            <li>✨ Instant summaries & key insights</li>
+                            <li>🤖 AI-generated Q&A</li>
+                            <li>💡 Instant problem solver</li>
+                            <li>📚 Perfectly organized study sets</li>
+                        </ul>
+                    </div>
+                 </div>
+            </div>
+        </section>
+
+        <section id="features" class="features">
+            <div class="container">
+                <h2>How StudySmart AI Boosts Your Grades</h2>
+                 <div class="features-grid">
+                     <div class="feature-item">
+                         <h3>Upload Anything, Understand Instantly</h3>
+                         <p>Drop in PDFs, images, or docs. Our AI digitizes and preps them for study in seconds.</p>
+                     </div>
+                     <div class="feature-item">
+                         <h3>Master Key Concepts Faster</h3>
+                         <p>Get AI-powered summaries and extracted notes to focus on what truly matters.</p>
+                     </div>
+                     <div class="feature-item">
+                         <h3>Ace Exams with AI Practice</h3>
+                         <p>Turn notes into potential exam questions and get instant, accurate answers.</p>
+                     </div>
+                      <div class="feature-item">
+                         <h3>Never Get Stuck Again</h3>
+                         <p>Our AI instantly solves math, science, and logic problems you upload.</p>
+                     </div>
+                       <div class="feature-item">
+                         <h3>Your Knowledge, Organized</h3>
+                         <p>Automatically create topic-based study sets. Find what you need, when you need it.</p>
+                     </div>
+                      <div class="feature-item feature-cta">
+                         <h3>Ready to Upgrade Your Studying?</h3>
+                         <p>See all the powerful features in action.</p>
+                         <a href="#pricing" class="btn btn-secondary">Choose Your Plan</a>
+                     </div>
+                 </div>
+            </div>
+        </section>
+
+        <section id="pricing" class="pricing">
+            <div class="container">
+                <h2>Simple Plans for Every Student</h2>
+                <div class="pricing-grid">
+                    <div class="pricing-plan plan-free">
+                        <h3>Free Trial</h3>
+                        <p class="price"><span>$0</span><span class="duration">/ first week</span></p>
+                        <p class="trial-info">Experience the basics</p>
+                        <ul>
+                            <li>✓ Try Core Features</li>
+                            <li>✓ 5 File Uploads</li>
+                            <li>✓ Basic Summarization</li>
+                            <li>✓ Standard Support</li>
+                        </ul>
+                        <a href="#" class="btn btn-outline">Start 1-Week Free Trial</a>
+                    </div>
+                    <div class="pricing-plan plan-pro recommended">
+                        <span class="badge">Best Value</span>
+                        <h3>Pro Plan</h3>
+                        <p class="price"><span>$9.90</span><span class="duration">/ month</span></p>
+                         <p class="trial-info">Unlock your full potential</p>
+                        <ul>
+                            <li>✓ Everything in Free, plus:</li>
+                            <li>✓ Unlimited File Uploads</li>
+                            <li>✓ Unlimited AI Features</li>
+                            <li>✓ Advanced Problem Solver</li>
+                            <li>✓ Priority Support</li>
+                        </ul>
+                        <a href="#" class="btn btn-primary">Go Pro Now</a>
+                    </div>
+                </div>
+                 <p class="pricing-footer">Cancel anytime. Simple and transparent pricing.</p>
+            </div>
+        </section>
+
+         <section id="faq" class="faq-section">
+            <div class="container">
+                <h2>Frequently Asked Questions</h2>
+                <div class="faq-grid">
+                    <details class="faq-item">
+                        <summary>What file types can I upload?</summary>
+                        <p>You can upload PDF, JPG, PNG, and DOCX files. Our OCR works instantly to make them usable.</p>
+                    </details>
+                    <details class="faq-item">
+                        <summary>How accurate is the AI?</summary>
+                        <p>Our AI is built on advanced models trained for high accuracy in summarization, Q&A, and problem-solving specific to academic content.</p>
+                    </details>
+                    <details class="faq-item">
+                        <summary>Is my data secure?</summary>
+                        <p>Absolutely. We use industry-standard encryption and security practices to protect your uploaded documents and data.</p>
+                    </details>
+                    <details class="faq-item">
+                        <summary>What happens after the free trial?</summary>
+                        <p>After 7 days, your account will automatically transition to the free limits unless you upgrade to Pro. You can upgrade anytime.</p>
+                    </details>
+                     <details class="faq-item">
+                        <summary>Can I cancel my Pro plan?</summary>
+                        <p>Yes, you can cancel your Pro subscription at any time through your account settings. You'll retain Pro access until the end of your billing period.</p>
+                    </details>
+                     <details class="faq-item">
+                        <summary>How does the problem solver work?</summary>
+                        <p>Simply upload an image or document containing the problem (math equations, scientific questions, logic puzzles), and our AI will provide a step-by-step solution where possible.</p>
+                    </details>
+                </div>
+            </div>
+        </section>
+
+        <section class="final-cta">
+            <div class="container">
+                <h2>Ready to Revolutionize Your Studying?</h2>
+                <p>Join thousands of students learning faster and smarter with StudySmart AI.</p>
+                <a href="#pricing" class="btn btn-primary btn-large">Start Your Free Trial Today!</a>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 sumfa.st. All rights reserved.</p>
+            <ul class="footer-links">
+                <li><a href="#">Privacy Policy</a></li>
+                <li><a href="#">Terms of Service</a></li>
+                <li><a href="#">Contact Us</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html> 

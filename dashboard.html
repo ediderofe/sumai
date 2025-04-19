@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - sumfa.st</title>
+    <link rel="stylesheet" href="style.css"> <!-- Reusing styles -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons - Uncomment if you add icons -->
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> -->
+    <!-- Supabase Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Supabase Client Initialization -->
+    <script src="auth-config.js"></script>
+    <!-- Auth Guard -->
+    <script src="auth-guard.js"></script>
+</head>
+<body>
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="dashboard.html" class="logo">sumfa.st</a>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active"><a href="#upload"> Upload Files</a></li> <!-- Add icon tags later if using library -->
+                    <li><a href="#study-sets"> My Study Sets</a></li>
+                    <li><a href="#summaries"> Summaries & Notes</a></li>
+                    <li><a href="#qa"> Q&A Practice</a></li>
+                    <li><a href="#solver"> Problem Solver</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="settings.html"> Settings</a> <!-- Link to settings page -->
+                <a href="index.html"> Log Out</a> <!-- Link back to homepage for logout -->
+            </div>
+        </aside>
+
+        <div class="main-content">
+            <header class="dashboard-header">
+                <button class="sidebar-toggle" aria-label="Toggle sidebar">☰</button>
+                <h1>Welcome User!</h1> <!-- TODO: Personalize later -->
+                <!-- Maybe add search or quick actions here -->
+            </header>
+
+            <main class="dashboard-main">
+                <!-- Content sections for features will go here -->
+                <section id="upload" class="dashboard-section">
+                    <h2>Upload New Document</h2>
+                    <div class="upload-area card">
+                        <div class="upload-instructions">
+                            <p>Drag & Drop PDF, JPG, PNG, or DOCX files here</p>
+                            <p>or</p>
+                            <button class="btn btn-primary">Select Files</button>
+                            <input type="file" id="document-upload-input" hidden multiple accept=".pdf,.jpg,.jpeg,.png,.docx">
+                        </div>
+                        <div class="upload-feedback" style="display: none;">
+                            <p>Drop files now!</p> 
+                        </div>
+                    </div>
+                    <h3>Selected Files</h3>
+                    <div id="selected-files-list" class="selected-files card">
+                        <p class="no-files-selected">No files selected yet.</p>
+                        <ul></ul> 
+                    </div>
+                    <button id="upload-selected-button" class="btn btn-success" style="display: none; margin-top: 1rem;">Upload All Selected</button>
+                </section>
+
+                 <section id="study-sets" class="dashboard-section" style="display: none;"> 
+                    <div class="section-header">
+                        <h2>My Study Sets</h2>
+                        <button id="add-set-button" type="button" class="btn btn-primary">+ Create New Set</button>
+                    </div>
+                    <!-- Area to display feedback messages -->
+                    <div id="study-set-messages" class="feedback-area"></div> 
+                    
+                    <!-- Grid to display existing sets -->
+                    <div id="study-sets-grid" class="study-sets-grid">
+                        <!-- Study set cards will be loaded here by JS -->
+                         <p class="loading-sets">Loading study sets...</p>
+                    </div>
+
+                    <!-- Hidden Modal/Form for Creating/Editing Sets -->
+                    <div id="set-modal" class="modal" style="display: none;">
+                        <div class="modal-content">
+                            <button type="button" class="modal-close-x close-modal-btn">&times;</button>
+                            <h3 id="modal-title">Create New Study Set</h3>
+                            <form id="set-form">
+                                <input type="hidden" id="set-id" name="set-id"> <!-- For editing -->
+                                <div class="form-group">
+                                    <label for="set-name">Set Name</label>
+                                    <input type="text" id="set-name" name="set-name" required maxlength="100">
+                                </div>
+                                <div class="modal-actions">
+                                    <button type="submit" id="save-set-button" class="btn btn-primary">Save Set</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="summaries" class="dashboard-section" style="display: none;"> <!-- Hidden initially -->
+                    <h2>Summaries & Key Insights</h2>
+                     <div class="card">
+                         <p>Select a document or study set to view its summary and extracted notes.</p>
+                         <!-- Placeholder for summary display -->
+                     </div>
+                </section>
+
+                 <section id="qa" class="dashboard-section" style="display: none;"> <!-- Hidden initially -->
+                    <h2>AI-Powered Q&A</h2>
+                     <div class="card">
+                         <p>Select a document or study set to generate practice questions or ask your own.</p>
+                         <!-- Placeholder for Q&A interface -->
+                         <button class="btn btn-primary">Generate Questions</button>
+                     </div>
+                </section>
+
+                 <section id="solver" class="dashboard-section" style="display: none;"> 
+                    <h2>Instant Problem Solver</h2>
+                     <div class="card">
+                         <p>Upload an image or type a math, science, or logic problem below.</p>
+                         <div class="solver-input-area">
+                            <textarea id="problem-input" placeholder="Type or paste your problem here..."></textarea>
+                             <div class="solver-actions">
+                                 <div>
+                                     <button type="button" class="btn btn-secondary btn-upload-problem">{/* Icon */} Upload Image</button>
+                                     <input type="file" id="problem-image-upload" hidden accept="image/*">
+                                     <span id="problem-image-name" class="selected-file-name"></span>
+                                 </div>
+                                 <button type="submit" class="btn btn-primary">Solve Problem</button>
+                             </div>
+                         </div>
+                         <div class="solver-output-area">
+                             <h3>Solution:</h3>
+                             <div class="output-placeholder">
+                                 <p>The solution will appear here...</p>
+                             </div>
+                         </div>
+                     </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Minimal footer or none needed if sidebar has links -->
+
+    <!-- Dashboard interaction script -->
+    <script src="dashboard.js"></script>
+</body>
+</html> 

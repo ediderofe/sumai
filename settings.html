@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - sumfa.st</title>
+    <link rel="stylesheet" href="style.css"> <!-- Reusing styles -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> -->
+    <!-- Supabase Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Supabase Client Initialization -->
+    <script src="auth-config.js"></script>
+    <!-- Auth Guard -->
+    <script src="auth-guard.js"></script>
+</head>
+<body class="dashboard-body"> <!-- Use same class for consistent body style -->
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+             <div class="sidebar-header">
+                <a href="dashboard.html" class="logo">sumfa.st</a>
+            </div>
+            <nav class="sidebar-nav">
+                <!-- Consider making the sidebar nav dynamic or simplifying for settings -->
+                 <ul>
+                    <li><a href="dashboard.html#upload"> Upload Files</a></li>
+                    <li><a href="dashboard.html#study-sets"> My Study Sets</a></li>
+                    <li><a href="dashboard.html#summaries"> Summaries & Notes</a></li>
+                    <li><a href="dashboard.html#qa"> Q&A Practice</a></li>
+                    <li><a href="dashboard.html#solver"> Problem Solver</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="settings.html" class="active"> Settings</a> <!-- Mark settings as active -->
+                <a href="index.html"> Log Out</a>
+            </div>
+        </aside>
+
+        <div class="main-content">
+            <header class="dashboard-header">
+                <button class="sidebar-toggle" aria-label="Toggle sidebar">☰</button>
+                <h1>Settings</h1>
+            </header>
+
+            <main class="dashboard-main">
+                <!-- Settings Content Sections -->
+                <section id="profile-settings" class="dashboard-section settings-section">
+                    <h2>Profile</h2>
+                    <form class="settings-form">
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" value="user@example.com" disabled>
+                        </div>
+                         <div class="form-group">
+                            <label for="password">Change Password</label>
+                            <input type="password" id="password" name="password" placeholder="New Password">
+                        </div>
+                        <button type="submit" class="btn btn-primary" disabled>Save Profile Changes</button>
+                    </form>
+                </section>
+
+                <section id="subscription-settings" class="dashboard-section settings-section">
+                    <h2>Subscription</h2>
+                     <div class="card">
+                         <p><strong>Current Plan:</strong> Pro Plan</p>
+                         <p><strong>Billing Cycle:</strong> Monthly</p>
+                         <p><strong>Next Billing Date:</strong> October 26, 2024</p>
+                         <button class="btn btn-outline">Manage Subscription</button>
+                         <button class="btn btn-danger-outline">Cancel Plan</button>
+                     </div>
+                </section>
+
+                 <section id="notification-settings" class="dashboard-section settings-section">
+                    <h2>Notifications</h2>
+                     <form class="settings-form">
+                         <div class="form-group checkbox-group">
+                             <label>
+                                 <input type="checkbox" name="email_updates" checked>
+                                 Receive product updates via email
+                             </label>
+                         </div>
+                         <div class="form-group checkbox-group">
+                              <label>
+                                 <input type="checkbox" name="study_reminders">
+                                 Enable study reminders
+                             </label>
+                         </div>
+                         <button type="submit" class="btn btn-primary">Save Notification Settings</button>
+                     </form>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Reusing dashboard script for toggle, potentially add settings-specific script -->
+    <!-- IMPORTANT: This needs to run AFTER auth-config.js -->
+    <script src="dashboard.js"></script>
+    <!-- Settings specific script -->
+    <script src="settings.js"></script>
+</body>
+</html> 

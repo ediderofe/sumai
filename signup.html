@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - sumfa.st</title>
+    <link rel="stylesheet" href="style.css"> <!-- Reusing homepage styles -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Supabase Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Supabase Client Initialization -->
+    <script src="auth-config.js"></script>
+    <!-- Auth Guard -->
+    <script src="auth-guard.js"></script>
+</head>
+<body>
+    <header class="header simple-header">
+        <nav class="navbar">
+            <div class="container">
+                <a href="index.html" class="logo">sumfa.st</a>
+                 <a href="login.html" class="btn btn-outline">Already have an account? Log In</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="auth-page">
+        <section class="auth-form-container">
+            <div class="container small-container">
+                <h2>Create Your Account</h2>
+                <p>Start your 1-week free trial. No credit card required.</p>
+                <form id="signup-form" method="post"> <!-- Removed action, added ID -->
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Create Password</label>
+                        <input type="password" id="password" name="password" required minlength="8">
+                    </div>
+                     <div class="form-group">
+                        <label for="confirm-password">Confirm Password</label>
+                        <input type="password" id="confirm-password" name="confirm-password" required minlength="8">
+                    </div>
+                     <div class="form-options">
+                         <label class="checkbox-label">
+                             <input type="checkbox" name="terms" required>
+                             I agree to the <a href="#" target="_blank">Terms of Service</a> and <a href="#" target="_blank">Privacy Policy</a>.
+                         </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full-width">Sign Up & Start Free Trial</button>
+                </form>
+                 <p class="auth-switch">Already have an account? <a href="login.html">Log in here</a>.</p>
+            </div>
+        </section>
+    </main>
+
+     <footer class="footer simple-footer">
+        <div class="container">
+            <p>&copy; 2024 sumfa.st. All rights reserved.</p>
+             <ul class="footer-links">
+                <li><a href="#">Privacy Policy</a></li>
+                <li><a href="#">Terms of Service</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <!-- Auth logic script -->
+    <script src="signup.js"></script>
+</body>
+</html> 
