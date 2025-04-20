@@ -92,6 +92,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const closeEditFileModalBtns = document.querySelectorAll('.close-edit-file-modal-btn');
         const saveFileChangesBtn = document.getElementById('save-file-changes-btn');
 
+        // --- NEW: Q&A Section Elements --- //
+        const qaSourceSelect = document.getElementById('qa-source-select');
+        const generateQaBtn = document.getElementById('generate-qa-btn');
+        const qaFeedbackArea = document.getElementById('qa-feedback-area');
+        const qaOutputArea = document.getElementById('qa-output-area');
+        const qaOutputContent = qaOutputArea?.querySelector('.qa-content');
+        const noQaGeneratedMsg = qaOutputArea?.querySelector('.no-qa-generated');
+
+        // --- NEW: Solver Section Elements --- //
+        const solverSourceSelect = document.getElementById('solver-source-select');
+        const problemInput = document.getElementById('problem-input');
+        const solveProblemBtn = document.querySelector('#solver .solver-actions .btn-primary'); // More specific selector
+        const solverOutputArea = document.querySelector('#solver .solver-output-area');
+        const solverOutputPlaceholder = solverOutputArea?.querySelector('.output-placeholder');
+        const solverFeedbackArea = document.getElementById('solver-feedback-area'); // Assuming you might add one
+
+        // --- NEW: Summary Section Elements --- //
+        const summarySourceSelect = document.getElementById('summary-source-select');
+        const viewSummaryBtn = document.getElementById('view-summary-btn');
+        const summaryFeedbackArea = document.getElementById('summary-feedback-area');
+        const summaryOutputArea = document.getElementById('summary-output-area');
+        const summarySourceNameSpan = document.getElementById('summary-source-name'); // Span inside H3
+        const summaryContentDiv = summaryOutputArea?.querySelector('.summary-content');
+        const summaryLoadingMsg = summaryContentDiv?.querySelector('.loading-summary'); 
+
         // --- Helper Functions --- //
         function escapeHTML(str) {
             const p = document.createElement('p');
@@ -177,6 +202,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (targetId === 'upload') {
                     displayUploadedFiles(); // Fetch and display files when upload section is shown
                 }
+                if (targetId === 'qa') {
+                    populateQASourceSelect(); // Populate dropdown when Q&A section is shown
+                }
+                if (targetId === 'solver') { // Added
+                    populateSolverSourceSelect(); // Populate dropdown when Solver section is shown
+                }
+                if (targetId === 'summaries') { // Added
+                    populateSummarySourceSelect(); // Populate dropdown when Summaries section is shown
+                }
                 sectionFound = true;
             } else {
                  console.warn(`Target section element with ID '${targetId}' not found.`);
@@ -216,6 +250,9 @@ document.addEventListener('DOMContentLoaded', () => {
                      // Load data for the default section if necessary
                      if (firstSectionId === 'study-sets') fetchStudySets();
                      if (firstSectionId === 'upload') displayUploadedFiles();
+                     if (firstSectionId === 'qa') populateQASourceSelect();
+                     if (firstSectionId === 'solver') populateSolverSourceSelect(); // Added
+                     if (firstSectionId === 'summaries') populateSummarySourceSelect(); // Added
                 } else {
                     console.error('Could not default to first section.');
                 }
@@ -242,13 +279,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 card.className = 'study-set-card';
                 card.dataset.setId = set.id;
                 const setName = escapeHTML(set.name);
+                // --- NEW Card Structure --- 
+                const fileCount = set.study_set_files[0]?.count || 0; // Access count from fetched data
+                const fileCountText = fileCount === 1 ? '1 file' : `${fileCount} files`;
+
                 card.innerHTML = `
-                    <h4>${setName}</h4>
-                    <div class="file-actions"> 
-                        <button type="button" class="btn-edit-file edit-set-btn" data-id="${set.id}" data-name="${setName}" aria-label="Edit study set ${setName}">Edit</button> 
+                    <div> 
+                        <h4>${setName}</h4>
+                        <p class="file-count">${fileCountText}</p>
+                    </div>
+                    <div class="file-actions">
+                        <button type="button" class="btn-edit-file edit-set-btn" data-id="${set.id}" data-name="${setName}" aria-label="Edit study set ${setName}">Edit</button>
                         <button type="button" class="btn-delete-file delete-set-btn" data-id="${set.id}" aria-label="Delete study set ${setName}">×</button>
                     </div>
                 `;
+                // --- End NEW Card Structure ---
+                
                 // Add event listeners for edit/delete
                 card.querySelector('.edit-set-btn').addEventListener('click', handleEditSet);
                 card.querySelector('.delete-set-btn').addEventListener('click', handleDeleteSet);
@@ -397,7 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const { data, error } = await supabaseClient
                     .from('study_sets') // Replace 'study_sets' with your actual table name
-                    .select('id, name')
+                    .select('id, name, study_set_files(count)') // Fetch count of related files
                     .eq('user_id', user.id) // RLS should also enforce this, but good practice
                     .order('created_at', { ascending: false });
 
@@ -1138,6 +1184,353 @@ document.addEventListener('DOMContentLoaded', () => {
               console.error("Could not find uploadedFilesListElement to attach listener.");
          }
         // END OF RESTORED LISTENERS 
+
+        // --- NEW: Q&A Functions --- //
+        async function populateQASourceSelect() {
+            if (!qaSourceSelect) return;
+            console.log("Populating Q&A source select...");
+            qaSourceSelect.innerHTML = '<option value="">-- Loading sources... --</option>';
+            qaSourceSelect.disabled = true;
+            generateQaBtn.disabled = true;
+
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                if (!user) throw new Error("User not logged in");
+
+                // Fetch files and sets concurrently
+                const [filesResult, setsResult] = await Promise.all([
+                    supabaseClient.from('uploaded_files').select('id, file_name').eq('user_id', user.id).order('file_name'),
+                    supabaseClient.from('study_sets').select('id, name').eq('user_id', user.id).order('name')
+                ]);
+
+                const { data: files, error: filesError } = filesResult;
+                const { data: sets, error: setsError } = setsResult;
+
+                if (filesError) throw new Error(`Error fetching files: ${filesError.message}`);
+                if (setsError) throw new Error(`Error fetching sets: ${setsError.message}`);
+
+                qaSourceSelect.innerHTML = '<option value="">-- Select a Source --</option>'; // Reset placeholder
+
+                // Add Files optgroup
+                if (files && files.length > 0) {
+                    const fileGroup = document.createElement('optgroup');
+                    fileGroup.label = 'Uploaded Files';
+                    files.forEach(file => {
+                        const option = document.createElement('option');
+                        option.value = `file-${file.id}`;
+                        option.textContent = escapeHTML(file.file_name);
+                        fileGroup.appendChild(option);
+                    });
+                    qaSourceSelect.appendChild(fileGroup);
+                }
+
+                // Add Study Sets optgroup
+                if (sets && sets.length > 0) {
+                    const setGroup = document.createElement('optgroup');
+                    setGroup.label = 'Study Sets';
+                    sets.forEach(set => {
+                        const option = document.createElement('option');
+                        option.value = `set-${set.id}`;
+                        option.textContent = escapeHTML(set.name);
+                        setGroup.appendChild(option);
+                    });
+                    qaSourceSelect.appendChild(setGroup);
+                }
+                
+                if ((!files || files.length === 0) && (!sets || sets.length === 0)) {
+                     qaSourceSelect.innerHTML = '<option value="">-- No sources available --</option>';
+                } else {
+                    qaSourceSelect.disabled = false;
+                    generateQaBtn.disabled = false; // Enable button once options are loaded
+                }
+
+            } catch (error) {
+                 console.error("Error populating Q&A source select:", error);
+                 qaSourceSelect.innerHTML = '<option value="">-- Error Loading Sources --</option>';
+                 showFeedback(qaFeedbackArea, `Error loading sources: ${error.message}`, true);
+            }
+        }
+
+        // --- Add Event Listener for Generate Q&A Button --- //
+        if (generateQaBtn) {
+            generateQaBtn.addEventListener('click', async () => {
+                if (!qaSourceSelect || qaSourceSelect.value === "") {
+                    showFeedback(qaFeedbackArea, "Please select a source document or study set first.", true);
+                    return;
+                }
+
+                const selectedValue = qaSourceSelect.value;
+                const [type, id] = selectedValue.split('-'); // e.g., ["file", "uuid"] or ["set", "uuid"]
+
+                if (!type || !id) {
+                     showFeedback(qaFeedbackArea, "Invalid source selection.", true);
+                     return;
+                }
+                
+                console.log(`Generate Q&A clicked. Type: ${type}, ID: ${id}`);
+                showFeedback(qaFeedbackArea, `Generating Q&A for ${type} with ID ${id}... (Not implemented yet)`, false);
+                generateQaBtn.disabled = true;
+                generateQaBtn.textContent = 'Generating...';
+                qaOutputArea.style.display = 'none'; // Hide previous results
+                
+                // ** TODO: Implement API call to AI backend here ** 
+                // Send the type and id (and potentially content/file references)
+                // Get back Q&A pairs
+                
+                // Placeholder result display:
+                setTimeout(() => {
+                     console.log("Placeholder: Q&A generation finished.");
+                     qaOutputArea.style.display = 'block'; // Show output area
+                     if(qaOutputContent && noQaGeneratedMsg) {
+                         qaOutputContent.innerHTML = ''; // Clear old content
+                         // Example: Add fetched Q&A
+                         // qaOutputContent.innerHTML = `<div>Q1: ... A1: ...</div>`;
+                         noQaGeneratedMsg.textContent = 'Q&A generation complete (Placeholder).'; 
+                         qaOutputContent.appendChild(noQaGeneratedMsg);
+                     }
+                     generateQaBtn.disabled = false;
+                     generateQaBtn.textContent = 'Generate Q&A';
+                     showFeedback(qaFeedbackArea, '', false); // Clear processing message
+                 }, 2000); // Simulate delay
+            });
+        }
+
+        // --- NEW: Solver Functions --- //
+        async function populateSolverSourceSelect() {
+            if (!solverSourceSelect) return;
+            console.log("Populating Solver source select...");
+            solverSourceSelect.innerHTML = '<option value="">-- Loading your files... --</option>';
+            solverSourceSelect.disabled = true;
+
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                if (!user) throw new Error("User not logged in");
+
+                const { data: files, error: filesError } = await supabaseClient
+                    .from('uploaded_files')
+                    .select('id, file_name')
+                    .eq('user_id', user.id)
+                    .order('file_name');
+
+                if (filesError) throw new Error(`Error fetching files: ${filesError.message}`);
+
+                solverSourceSelect.innerHTML = '<option value="">-- Select an uploaded file --</option>'; // Reset placeholder
+
+                if (files && files.length > 0) {
+                    files.forEach(file => {
+                        const option = document.createElement('option');
+                        option.value = file.id; // Use file ID as value
+                        option.textContent = escapeHTML(file.file_name);
+                        solverSourceSelect.appendChild(option);
+                    });
+                     solverSourceSelect.disabled = false;
+                } else {
+                     solverSourceSelect.innerHTML = '<option value="">-- No files uploaded yet --</option>';
+                }
+            } catch (error) {
+                 console.error("Error populating Solver source select:", error);
+                 solverSourceSelect.innerHTML = '<option value="">-- Error Loading Files --</option>';
+                 // Consider adding a dedicated feedback area for the solver section
+                 // showFeedback(solverFeedbackArea, `Error loading files: ${error.message}`, true);
+            }
+        }
+
+        // --- Event Listener for Solve Problem Button --- //
+        if (solveProblemBtn) {
+             solveProblemBtn.addEventListener('click', async () => {
+                 const selectedFileId = solverSourceSelect ? solverSourceSelect.value : '';
+                 const problemText = problemInput ? problemInput.value.trim() : '';
+
+                 if (!selectedFileId && problemText === '') {
+                     alert("Please select a source document or type your problem in the text box."); // Simple alert for now
+                     // Or use showFeedback if a solverFeedbackArea is added
+                     return;
+                 }
+
+                 // Reset output area
+                 if (solverOutputPlaceholder) solverOutputPlaceholder.innerHTML = '<p>Solving...</p>';
+                 if (solverOutputArea) solverOutputArea.style.display = 'block';
+
+                 solveProblemBtn.disabled = true;
+                 solveProblemBtn.textContent = 'Solving...';
+
+                 let sourceInfo = {};
+                 if (selectedFileId) {
+                     const selectedFileName = solverSourceSelect.options[solverSourceSelect.selectedIndex]?.text || 'selected file';
+                     console.log(`Solving problem from selected file: ID=${selectedFileId}, Name=${selectedFileName}`);
+                     sourceInfo = { type: 'file', id: selectedFileId, name: selectedFileName };
+                     // TODO: Implement backend call using file ID
+                 } else {
+                     console.log("Solving problem from text input:", problemText);
+                      sourceInfo = { type: 'text', content: problemText };
+                     // TODO: Implement backend call using problem text
+                 }
+
+                 // Placeholder for result
+                 setTimeout(() => {
+                     console.log("Placeholder: Solving finished.");
+                     if (solverOutputPlaceholder) {
+                        if (sourceInfo.type === 'file') {
+                             solverOutputPlaceholder.innerHTML = `<p>Solution for file <strong>${escapeHTML(sourceInfo.name)}</strong> will appear here (Placeholder).</p>`;
+                         } else {
+                            solverOutputPlaceholder.innerHTML = `<p>Solution for your text problem will appear here (Placeholder).</p>`;
+                        }
+                    }
+                     solveProblemBtn.disabled = false;
+                     solveProblemBtn.textContent = 'Solve Problem';
+                     // Clear feedback if used
+                 }, 2000); // Simulate delay
+             });
+        }
+
+        // --- NEW: Summary Functions --- //
+        async function populateSummarySourceSelect() {
+            if (!summarySourceSelect) return;
+            console.log("Populating Summary source select...");
+            summarySourceSelect.innerHTML = '<option value="">-- Loading sources... --</option>';
+            summarySourceSelect.disabled = true;
+            viewSummaryBtn.disabled = true;
+
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                if (!user) throw new Error("User not logged in");
+
+                // Fetch files and sets concurrently (same as Q&A)
+                const [filesResult, setsResult] = await Promise.all([
+                    supabaseClient.from('uploaded_files').select('id, file_name').eq('user_id', user.id).order('file_name'),
+                    supabaseClient.from('study_sets').select('id, name').eq('user_id', user.id).order('name')
+                ]);
+
+                const { data: files, error: filesError } = filesResult;
+                const { data: sets, error: setsError } = setsResult;
+
+                if (filesError) throw new Error(`Error fetching files: ${filesError.message}`);
+                if (setsError) throw new Error(`Error fetching sets: ${setsError.message}`);
+
+                summarySourceSelect.innerHTML = '<option value="">-- Select a Source --</option>'; // Reset placeholder
+
+                // Add Files optgroup
+                if (files && files.length > 0) {
+                    const fileGroup = document.createElement('optgroup');
+                    fileGroup.label = 'Uploaded Files';
+                    files.forEach(file => {
+                        const option = document.createElement('option');
+                        option.value = `file-${file.id}`;
+                        option.textContent = escapeHTML(file.file_name);
+                        fileGroup.appendChild(option);
+                    });
+                    summarySourceSelect.appendChild(fileGroup);
+                }
+
+                // Add Study Sets optgroup
+                if (sets && sets.length > 0) {
+                    const setGroup = document.createElement('optgroup');
+                    setGroup.label = 'Study Sets';
+                    sets.forEach(set => {
+                        const option = document.createElement('option');
+                        option.value = `set-${set.id}`;
+                        option.textContent = escapeHTML(set.name);
+                        setGroup.appendChild(option);
+                    });
+                    summarySourceSelect.appendChild(setGroup);
+                }
+                
+                if ((!files || files.length === 0) && (!sets || sets.length === 0)) {
+                     summarySourceSelect.innerHTML = '<option value="">-- No sources available --</option>';
+                } else {
+                    summarySourceSelect.disabled = false;
+                    viewSummaryBtn.disabled = false; // Enable button once options are loaded
+                }
+
+            } catch (error) {
+                 console.error("Error populating Summary source select:", error);
+                 summarySourceSelect.innerHTML = '<option value="">-- Error Loading Sources --</option>';
+                 showFeedback(summaryFeedbackArea, `Error loading sources: ${error.message}`, true);
+            }
+        }
+
+        // --- Add Event Listener for View Summary Button --- //
+        if (viewSummaryBtn) {
+            viewSummaryBtn.addEventListener('click', async () => {
+                if (!summarySourceSelect || summarySourceSelect.value === "") {
+                    showFeedback(summaryFeedbackArea, "Please select a source document or study set first.", true);
+                    return;
+                }
+
+                const selectedValue = summarySourceSelect.value;
+                const [type, id] = selectedValue.split('-'); // e.g., ["file", "uuid"] or ["set", "uuid"]
+                const selectedName = summarySourceSelect.options[summarySourceSelect.selectedIndex]?.text || 'selected source';
+
+                if (!type || !id) {
+                     showFeedback(summaryFeedbackArea, "Invalid source selection.", true);
+                     return;
+                }
+                
+                console.log(`View Summary clicked. Type: ${type}, ID: ${id}, Name: ${selectedName}`);
+                showFeedback(summaryFeedbackArea, `AI is analyzing '${escapeHTML(selectedName)}'... Please wait.`, false);
+                viewSummaryBtn.disabled = true;
+                viewSummaryBtn.textContent = 'Analyzing...';
+                summaryOutputArea.style.display = 'none'; // Hide previous results
+                if (summarySourceNameSpan) summarySourceNameSpan.textContent = '';
+
+                // --- NEW: API Call to Backend --- 
+                try {
+                    const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+                    if (sessionError || !session) {
+                        throw new Error('Authentication error. Please log in again.');
+                    }
+
+                    const accessToken = session.access_token;
+
+                    // Assume backend endpoint is /api/analyze
+                    // You will need to create this backend function separately!
+                    const response = await fetch('/api/analyze', { 
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${accessToken}` // Send auth token
+                        },
+                        body: JSON.stringify({ 
+                            sourceType: type, // 'file' or 'set'
+                            sourceId: id      // UUID of the file or set
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ message: response.statusText })); // Try to get error message
+                        throw new Error(`Analysis failed: ${errorData.message || response.status}`);
+                    }
+
+                    const result = await response.json(); // Expect { summary: "...", insights: ["...", "..."] }
+
+                    console.log("AI Analysis successful:", result);
+
+                    // Display results
+                    summaryOutputArea.style.display = 'block';
+                    if (summarySourceNameSpan) summarySourceNameSpan.textContent = `for ${escapeHTML(selectedName)}`;
+                    if (summaryContentDiv) {
+                        summaryContentDiv.innerHTML = ''; // Clear loading/previous
+                        
+                        // Simple formatting - you can enhance this significantly
+                        const summaryHTML = `<h4>Summary:</h4><p>${escapeHTML(result.summary || 'No summary provided.')}</p>`;
+                        const insightsHTML = `<h4>Key Insights:</h4><ul>${(result.insights || ['No insights provided.']).map(insight => `<li>${escapeHTML(insight)}</li>`).join('')}</ul>`;
+                        
+                        summaryContentDiv.innerHTML = summaryHTML + insightsHTML;
+                    }
+                    showFeedback(summaryFeedbackArea, '', false); // Clear processing message
+
+                } catch (error) {
+                    console.error("Error during AI analysis:", error);
+                    showFeedback(summaryFeedbackArea, `Error: ${error.message}`, true);
+                    summaryOutputArea.style.display = 'none'; // Hide output area on error
+
+                } finally {
+                    viewSummaryBtn.disabled = false;
+                    viewSummaryBtn.textContent = 'Analyze & Summarize';
+                }
+                // --- END NEW: API Call --- 
+            });
+        }
 
         // --- Initialization & Event Listeners --- //
         function initializeDashboard() {

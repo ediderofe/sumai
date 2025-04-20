@@ -1587,430 +1587,93 @@ body.dashboard-body {
     padding: 2rem;
 }
 
-.study-set-card {
-    background-color: var(--bg-color);
+.study-set-card { /* Re-applying and refining Card Styles */
+    background-color: var(--bg-color); /* Keep it simple for now */
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
-    padding: 1.5rem;
+    padding: 1.5rem; /* Consistent padding */
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    justify-content: space-between; /* Push actions down */
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    border: 1px solid var(--light-border-color);
+    position: relative;
+    cursor: pointer; /* --- ADD CURSOR POINTER --- */
+    min-height: 120px; /* Adjust as needed */
 }
 
 .study-set-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    transform: translateY(-4px); /* More noticeable lift */
+    box-shadow: 0 7px 22px rgba(0, 86, 179, 0.1); /* Clearer shadow */
+    border-color: var(--primary-color); /* Highlight border */
 }
 
 .study-set-card h4 {
-    font-size: 1.1rem;
+    font-size: 1.15rem; /* Adjust size */
     font-weight: 600;
     color: var(--accent-color);
-    margin-bottom: 1rem;
-    word-break: break-word; /* Prevent long names overflowing */
+    margin-bottom: 0.5rem;
+    word-break: break-word;
 }
 
-/* Modal Styles */
-.modal {
-    position: fixed;
-    z-index: 1300; /* Above everything else */
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.5); /* Dim background */
-    display: flex; /* Use flex to center */
-    align-items: center;
-    justify-content: center;
+/* --- Style for file count --- */
+.study-set-card .file-count {
+    font-size: 0.9rem;
+    color: var(--light-text-color);
+    margin-bottom: 0.5rem; /* Adjust spacing */
+    margin-top: 0.25rem; /* Add a little space below title */
 }
 
-.modal-content {
-    background-color: #fefefe;
-    margin: auto;
-    padding: 2rem 2.5rem;
-    border: 1px solid #888;
-    width: 90%;
-    max-width: 500px;
-    border-radius: var(--border-radius);
-    position: relative;
-    box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+.study-set-card .file-actions {
+    /* Position actions at the bottom right */
+    align-self: flex-end;
+    margin-top: auto; /* Push to bottom */
+    padding-top: 0.8rem; /* More space from content above */
 }
 
-.modal-close-x {
-    color: #aaa;
-    position: absolute;
-    top: 10px;
-    right: 20px;
-    font-size: 28px;
-    font-weight: bold;
-    line-height: 1;
-    cursor: pointer;
-    padding: 0;
-    background: none;
-    border: none;
-}
-
-.modal-close-x:hover,
-.modal-close-x:focus {
-    color: black;
-    text-decoration: none;
-}
-
-.modal-content h3 {
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-    color: var(--accent-color);
-    text-align: center;
-}
-
-.modal-actions {
-    margin-top: 1.5rem;
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.8rem;
-}
-
-.modal-actions .btn {
-     border-radius: 6px;
-}
-
-/* --- End Study Set Styles --- */
-
-/* --- File List Item Styles --- */
-
-/* Style for the list items to ensure button alignment */
-#selected-files-list ul li,
-#uploaded-files-list ul li,
-#detail-set-files-list ul li /* Apply to detail list items too */ {
-    display: flex;
-    justify-content: space-between; /* Push button to the right */
-    align-items: center; /* Vertically align items */
-    padding: 0.5rem 0; /* Add some padding to list items */
-    border-bottom: 1px solid var(--light-border-color); /* Separator */
-}
-#selected-files-list ul li:last-child,
-#uploaded-files-list ul li:last-child,
-#detail-set-files-list ul li:last-child /* Apply to detail list items too */ {
-    border-bottom: none; /* Remove border from last item */
-}
-
-/* Base style for small action buttons within file-actions */
+/* --- File/Set List Action Buttons --- */
 .file-actions button, 
-.remove-selected-file /* Add this class */ {
+.remove-selected-file /* Apply to file selection remove btn too */ {
     background: none;
-    border: none;
+    border: 1px solid transparent; /* Add transparent border for layout consistency on hover */
     color: #aaa; /* Light grey initial color */
     cursor: pointer;
-    font-size: 1.2rem; /* Slightly larger for better click target */
-    font-weight: 600; /* Less bold */
+    font-size: 0.9rem; /* Adjust size */
+    font-weight: 600;
     line-height: 1; 
-    padding: 0.2rem 0.4rem; /* Adjust padding */
-    border-radius: 4px; 
-    margin-left: 0.5rem; /* Adjust spacing */
+    padding: 0.3rem 0.6rem; /* Adjust padding */
+    border-radius: 5px; /* Subtle rounding */
+    margin-left: 0.4rem; /* Space between buttons */
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     vertical-align: middle;
-    transition: background-color 0.2s ease, color 0.2s ease;
-    display: inline-flex; /* Helps vertical alignment */
-    align-items: center;
-    justify-content: center;
-    min-width: 24px; /* Ensure minimum size */
-    min-height: 24px;
 }
 
-/* Remove extra styling from the Edit button text */
+/* Specific style for Edit buttons */
 .file-actions .btn-edit-file {
-    font-size: 0.85rem; /* Smaller text for Edit */
-    font-weight: 500;
-    padding: 0.2rem 0.6rem; /* More horizontal padding for text */
     color: var(--primary-color);
+    /* Keep font-size/padding from base */
 }
 
-/* Hover/Focus states for file list delete/remove buttons */
-.file-actions .btn-delete-file:hover, 
+/* Hover/Focus states for Edit buttons */
+.file-actions .btn-edit-file:hover, 
+.file-actions .btn-edit-file:focus {
+    background-color: var(--secondary-color); /* Light blue background */
+    color: var(--accent-color); /* Darker blue text */
+    border-color: var(--secondary-color);
+    outline: none;
+}
+
+/* Hover/Focus states for Delete/Remove buttons (X) */
+.file-actions .btn-delete-file:hover,
 .file-actions .btn-delete-file:focus,
 .file-actions .btn-remove-from-set:hover, 
 .file-actions .btn-remove-from-set:focus,
-.remove-selected-file:hover, /* Add this class */
-.remove-selected-file:focus /* Add this class */ {
-    color: #dc3545; /* Red text on hover */
-    background-color: #fbeaea; /* Very light red background */
+.remove-selected-file:hover,
+.remove-selected-file:focus {
+    background-color: #f8d7da; /* Light red background */
+    color: #721c24; /* Darker red text */
+    border-color: #f8d7da;
     outline: none;
-}
-
-/* Hover/Focus states for file list edit buttons */
-.file-actions .btn-edit-file:hover, 
-.file-actions .btn-edit-file:focus { 
-    color: var(--accent-color); /* Darker blue text on hover */
-    background-color: var(--secondary-color); /* Light blue background */
-    outline: none;
-}
-
-/* Container for file action buttons */
-.file-actions {
-    display: flex;
-    gap: 0.4rem; /* Space between edit/delete */
-    margin-top: 1rem; /* Add margin like original study-set-actions */
-    justify-content: flex-end; /* Align to right like original */
-}
-
-/* ... Rest of styles ... */
-
-/* --- Study Set Styles --- */
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--light-border-color);
-}
-
-.section-header h2 {
-    margin: 0;
-}
-
-.feedback-area {
-    margin-bottom: 1rem;
-    padding: 0.8rem 1rem;
-    border-radius: 6px;
-    display: none; /* Hidden by default */
-    font-weight: 500;
-}
-
-.feedback-area.success {
-    background-color: #d4edda; /* Light green */
-    color: #155724;
-    border: 1px solid #c3e6cb;
-    display: block;
-}
-
-.feedback-area.error {
-    background-color: #f8d7da; /* Light red */
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-    display: block;
-}
-
-
-.study-sets-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1.5rem;
-    min-height: 100px; /* Placeholder height */
-}
-
-.loading-sets {
-    color: var(--light-text-color);
-    font-style: italic;
-    grid-column: 1 / -1; /* Span full grid width */
-    text-align: center;
-    padding: 2rem;
-}
-
-.study-set-card {
-    background-color: var(--bg-color);
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.study-set-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-}
-
-.study-set-card h4 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--accent-color);
-    margin-bottom: 1rem;
-    word-break: break-word; /* Prevent long names overflowing */
-}
-
-/* Modal Styles */
-.modal {
-    position: fixed;
-    z-index: 1300; /* Above everything else */
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.5); /* Dim background */
-    display: flex; /* Use flex to center */
-    align-items: center;
-    justify-content: center;
-}
-
-.modal-content {
-    background-color: #fefefe;
-    margin: auto;
-    padding: 2rem 2.5rem;
-    border: 1px solid #888;
-    width: 90%;
-    max-width: 500px;
-    border-radius: var(--border-radius);
-    position: relative;
-    box-shadow: 0 5px 25px rgba(0,0,0,0.2);
-}
-
-.modal-close-x {
-    color: #aaa;
-    position: absolute;
-    top: 10px;
-    right: 20px;
-    font-size: 28px;
-    font-weight: bold;
-    line-height: 1;
-    cursor: pointer;
-    padding: 0;
-    background: none;
-    border: none;
-}
-
-.modal-close-x:hover,
-.modal-close-x:focus {
-    color: black;
-    text-decoration: none;
-}
-
-.modal-content h3 {
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-    color: var(--accent-color);
-    text-align: center;
-}
-
-.modal-actions {
-    margin-top: 1.5rem;
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.8rem;
-}
-
-.modal-actions .btn {
-     border-radius: 6px;
-}
-
-/* --- End Study Set Styles --- */
-
-/* Style the Edit File Modal Dropdown */
-#edit-file-set {
-    width: 100%;
-    padding: 0.8rem 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: 6px; /* Match inputs */
-    font-size: 1rem;
-    font-family: var(--body-font);
-    background-color: #fff; /* White background */
-    appearance: none; /* Remove default system appearance */
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    /* Add custom dropdown arrow */
-    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007bff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
-    background-repeat: no-repeat;
-    background-position: right 1rem center;
-    background-size: 0.65em auto;
-    cursor: pointer;
-}
-
-#edit-file-set:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-}
-
-/* Container for file action buttons */
-.file-actions {
-    display: flex;
-    gap: 0.4rem; /* Space between edit/delete */
-    margin-top: 1rem; /* Add margin like original study-set-actions */
-    justify-content: flex-end; /* Align to right like original */
-}
-
-/* ... Rest of styles ... */
-
-/* --- Study Set Styles --- */
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--light-border-color);
-}
-
-.section-header h2 {
-    margin: 0;
-}
-
-.feedback-area {
-    margin-bottom: 1rem;
-    padding: 0.8rem 1rem;
-    border-radius: 6px;
-    display: none; /* Hidden by default */
-    font-weight: 500;
-}
-
-.feedback-area.success {
-    background-color: #d4edda; /* Light green */
-    color: #155724;
-    border: 1px solid #c3e6cb;
-    display: block;
-}
-
-.feedback-area.error {
-    background-color: #f8d7da; /* Light red */
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-    display: block;
-}
-
-
-.study-sets-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1.5rem;
-    min-height: 100px; /* Placeholder height */
-}
-
-.loading-sets {
-    color: var(--light-text-color);
-    font-style: italic;
-    grid-column: 1 / -1; /* Span full grid width */
-    text-align: center;
-    padding: 2rem;
-}
-
-.study-set-card {
-    background-color: var(--bg-color);
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.study-set-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-}
-
-.study-set-card h4 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--accent-color);
-    margin-bottom: 1rem;
-    word-break: break-word; /* Prevent long names overflowing */
 }
 
 /* Modal Styles */

@@ -27,7 +27,7 @@
                 <ul>
                     <li class="active"><a href="#upload"> Upload Files</a></li> <!-- Add icon tags later if using library -->
                     <li><a href="#study-sets"> My Study Sets</a></li>
-                    <li><a href="#summaries"> Summaries & Notes</a></li>
+                    <li><a href="#summaries"> Summaries & Key Insights</a></li>
                     <li><a href="#qa"> Q&A Practice</a></li>
                     <li><a href="#solver"> Problem Solver</a></li>
                 </ul>
@@ -175,34 +175,72 @@
 
                 </section>
 
-                 <section id="summaries" class="dashboard-section" style="display: none;"> <!-- Hidden initially -->
-                    <h2>Summaries & Key Insights</h2>
-                     <div class="card">
-                         <p>Select a document or study set to view its summary and extracted notes.</p>
-                         <!-- Placeholder for summary display -->
-                     </div>
-                </section>
+                 <section id="summaries" class="dashboard-section" style="display: none;">
+                      <h2>Unlock AI-Powered Summaries & Key Insights</h2> 
+                       <div class="card">
+                           <div class="form-group">
+                               <label for="summary-source-select">Select Document or Study Set:</label>
+                               <p style="font-size: 0.9rem; color: var(--light-text-color); margin-top: -0.5rem; margin-bottom: 1rem;">Let our AI analyze your selection to extract a concise summary and the most crucial key insights.</p>
+                               <select id="summary-source-select" name="summary-source-select">
+                                   <option value="">-- Loading sources... --</option>
+                                   <!-- Options loaded by JS -->
+                               </select>
+                           </div>
+                           <button id="view-summary-btn" class="btn btn-primary" disabled>Analyze & Summarize</button>
+                           <div class="feedback-area" id="summary-feedback-area" style="margin-top: 1rem;"></div>
+                       </div>
+  
+                       <!-- Area to display summary -->
+                        <div id="summary-output-area" class="card" style="margin-top: 2rem; display: none;">
+                            <h3>AI Analysis Results <span id="summary-source-name"></span></h3>
+                            <div class="summary-content">
+                                <!-- Summary will be loaded here -->
+                                <p class="loading-summary">Select a source and click "Analyze & Summarize" to generate your AI insights...</p>
+                            </div>
+                        </div>
+                 </section>
 
-                 <section id="qa" class="dashboard-section" style="display: none;"> <!-- Hidden initially -->
-                    <h2>AI-Powered Q&A</h2>
-                     <div class="card">
-                         <p>Select a document or study set to generate practice questions or ask your own.</p>
-                         <!-- Placeholder for Q&A interface -->
-                         <button class="btn btn-primary">Generate Questions</button>
-                     </div>
+                 <section id="qa" class="dashboard-section" style="display: none;"> 
+                    <h2>AI-Powered Q&A Practice</h2>
+                    <div class="card">
+                        <div class="form-group">
+                            <label for="qa-source-select">Select Source Document or Study Set:</label>
+                            <select id="qa-source-select" name="qa-source-select">
+                                <option value="">-- Loading sources... --</option>
+                                <!-- Options will be loaded by JS -->
+                            </select>
+                        </div>
+                        <button id="generate-qa-btn" class="btn btn-primary" disabled>Generate Q&A</button>
+                        <div class="feedback-area" id="qa-feedback-area" style="margin-top: 1rem;"></div>
+                    </div>
+                    
+                    <!-- Area to display generated Q&A -->
+                    <div id="qa-output-area" class="card" style="margin-top: 2rem; display: none;"> 
+                        <h3>Generated Questions & Answers:</h3>
+                        <div class="qa-content">
+                            <!-- Q&A pairs will be loaded here -->
+                            <p class="no-qa-generated">Click "Generate Q&A" above to create practice questions.</p>
+                        </div>
+                    </div>
                 </section>
 
                  <section id="solver" class="dashboard-section" style="display: none;"> 
                     <h2>Instant Problem Solver</h2>
                      <div class="card">
-                         <p>Upload an image or type a math, science, or logic problem below.</p>
+                         <p>Select an uploaded document or type/paste a math, science, or logic problem below.</p>
                          <div class="solver-input-area">
+                            <div class="form-group">
+                                <label for="solver-source-select">Select Source Document (Optional):</label>
+                                <select id="solver-source-select" name="solver-source-select">
+                                    <option value="">-- Select an uploaded file --</option>
+                                    <!-- Options will be loaded by JS -->
+                                </select>
+                            </div>
+                             <p style="text-align: center; margin: 1rem 0; color: var(--light-text-color); font-weight: 500;">-- OR --</p>
                             <textarea id="problem-input" placeholder="Type or paste your problem here..."></textarea>
                              <div class="solver-actions">
                                  <div>
-                                     <button type="button" class="btn btn-secondary btn-upload-problem">{/* Icon */} Upload Image</button>
-                                     <input type="file" id="problem-image-upload" hidden accept="image/*">
-                                     <span id="problem-image-name" class="selected-file-name"></span>
+                                     <!-- Removed Upload Image Button -->
                                  </div>
                                  <button type="submit" class="btn btn-primary">Solve Problem</button>
                              </div>
